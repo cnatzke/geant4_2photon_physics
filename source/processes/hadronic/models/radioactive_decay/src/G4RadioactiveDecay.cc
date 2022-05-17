@@ -1151,9 +1151,11 @@ G4RadioactiveDecay::LoadDecayTable(const G4ParticleDefinition& theParentNucleus)
                         }
                         break;
                         case TwoPhoton:
+                        {
                             // Not yet implemented
                             G4cout << " Two-photon decay, a = " << a << ", b = " << b << ", c = " << c << G4endl;
-                            break;
+                        }
+                        break;
                         case RDM_ERROR:
 
                         default:

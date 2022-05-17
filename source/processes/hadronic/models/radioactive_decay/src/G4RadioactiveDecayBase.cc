@@ -855,9 +855,11 @@ G4RadioactiveDecayBase::LoadDecayTable(const G4ParticleDefinition& theParentNucl
                         }
                         break;
                         case TwoPhoton:
+                        {
                             // Not yet implemented
                             G4cout << " Two-photon decay, a = " << a << ", b = " << b << ", c = " << c << G4endl;
-                            break;
+                        }
+                        break;
                         case RDM_ERROR:
 
                         default:
@@ -882,7 +884,7 @@ G4RadioactiveDecayBase::LoadDecayTable(const G4ParticleDefinition& theParentNucl
             theNuclearDecayChannel = static_cast<G4NuclearDecay*>(theChannel);
             theDecayMode = theNuclearDecayChannel->GetDecayMode();
 
-            if (theDecayMode != IT) {
+            if (theDecayMode != IT && (theDecayMode != TwoPhoton)) {
                 theBR = theChannel->GetBR();
                 theChannel->SetBR(theBR*modeTotalBR[theDecayMode]/modeSumBR[theDecayMode]);
             }
