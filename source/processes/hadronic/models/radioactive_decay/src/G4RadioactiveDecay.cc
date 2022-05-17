@@ -969,7 +969,7 @@ G4RadioactiveDecay::LoadDecayTable(const G4ParticleDefinition& theParentNucleus)
                             theDecayTable->Insert(aTwoPhotonChannel);
                             //aTwoPhotonChannel->DumpNuclearInfo();
                         }
-                        break
+                        break;
                         case RDM_ERROR:
 
                         default:
