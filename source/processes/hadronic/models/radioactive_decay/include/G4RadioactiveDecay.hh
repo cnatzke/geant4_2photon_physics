@@ -49,7 +49,7 @@
 // 0.b.3 release.
 //
 // 13 April 2000, F Lei, DERA UK
-// 0.b.4 release. No change to this file     
+// 0.b.4 release. No change to this file
 //
 // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 ////////////////////////////////////////////////////////////////////////////////
@@ -74,13 +74,14 @@
 class G4Fragment;
 class G4RadioactiveDecaymessenger;
 class G4PhotonEvaporation;
+class G4TwoPhotonEvaporation;
 
 typedef std::vector<G4RadioactiveDecayChainsFromParent> G4RadioactiveDecayParentChainTable;
 typedef std::vector<G4RadioactiveDecayRatesToDaughter> G4RadioactiveDecayRates;
 typedef std::map<G4String, G4DecayTable*> DecayTableMap;
 
 
-class G4RadioactiveDecay : public G4VRestDiscreteProcess 
+class G4RadioactiveDecay : public G4VRestDiscreteProcess
 {
   // class description
 
@@ -90,7 +91,7 @@ class G4RadioactiveDecay : public G4VRestDiscreteProcess
   // the Radioactivity database which was derived from ENSDF.
   // All decay products are submitted back to the particle tracking process
   // through the G4ParticleChangeForRadDecay object.
-  // class description - end 
+  // class description - end
 
   public: // with description
 
@@ -126,7 +127,7 @@ class G4RadioactiveDecay : public G4VRestDiscreteProcess
     void SetHLThreshold(G4double hl) {halflifethreshold = hl;}
 
     // Enable/disable ICM
-    void SetICM(G4bool icm) {applyICM = icm;} 
+    void SetICM(G4bool icm) {applyICM = icm;}
 
     // Enable/disable ARM
     void SetARM(G4bool arm) {applyARM = arm;}
@@ -143,18 +144,18 @@ class G4RadioactiveDecay : public G4VRestDiscreteProcess
     // Calculates the coefficient and decay time table for all the descendents
     // of the specified isotope.  Adds the calculated table to the private data
     // member "theParentChainTable".
-    // used in VR decay mode only 
+    // used in VR decay mode only
 
     void GetChainsFromParent(const G4ParticleDefinition&);
     // Used to retrieve the coefficient and decay time table for all the
     // descendants of the specified isotope from "theParentChainTable"
     // and place it in "chainsFromParent".
-    // used in VR decay mode only 
+    // used in VR decay mode only
 
     void SetDecayRate(G4int,G4int,G4double, G4int, std::vector<G4double>,
                       std::vector<G4double>);
     // Sets "theDecayRate" with data supplied in the arguements.
-    // used in VR decay mode only 
+    // used in VR decay mode only
 
     std::vector<G4RadioactivityTable*> GetTheRadioactivityTables()
        {return theRadioactivityTables;}
@@ -186,8 +187,8 @@ class G4RadioactiveDecay : public G4VRestDiscreteProcess
     // Controls whether G4RadioactiveDecay runs in analogue mode or
     // variance reduction mode.  SetBRBias, SetSplitNuclei and
     // SetSourceTimeProfile all turn off analogue mode and use VR mode
-    inline void SetAnalogueMonteCarlo (G4bool r ) { 
-      AnalogueMC = r; 
+    inline void SetAnalogueMonteCarlo (G4bool r ) {
+      AnalogueMC = r;
       if (!AnalogueMC) halflifethreshold = 1e-6*CLHEP::s;
     }
 
@@ -219,7 +220,7 @@ class G4RadioactiveDecay : public G4VRestDiscreteProcess
     }
 
     inline const G4ThreeVector& GetDecayDirection() const {
-      return forceDecayDirection; 
+      return forceDecayDirection;
     }
 
     inline void SetDecayHalfAngle(G4double halfAngle=0.*CLHEP::deg) {
@@ -279,6 +280,7 @@ class G4RadioactiveDecay : public G4VRestDiscreteProcess
 
     G4RadioactiveDecaymessenger* theRadioactiveDecaymessenger;
     G4PhotonEvaporation* photonEvaporation;
+    G4TwoPhotonEvaporation* twoPhotonEvaporation;
 
     G4NucleusLimits theNucleusLimits;
 
@@ -317,7 +319,7 @@ class G4RadioactiveDecay : public G4VRestDiscreteProcess
     G4int decayWindows[100];
     static const G4double levelTolerance;
 
-    // Radioactive decay database directory path 
+    // Radioactive decay database directory path
     G4String dirPath;
 
     // User-defined radioactive decay data files
@@ -340,7 +342,7 @@ class G4RadioactiveDecay : public G4VRestDiscreteProcess
     // ParticleChange for decay process
     G4ParticleChangeForRadDecay fParticleChangeForRadDecay;
 
-    // inline implementations 
+    // inline implementations
     inline
     G4double AtRestGetPhysicalInteractionLength(const G4Track& track,
                                                 G4ForceCondition* condition)
@@ -369,4 +371,3 @@ class G4RadioactiveDecay : public G4VRestDiscreteProcess
 };
 
 #endif
-

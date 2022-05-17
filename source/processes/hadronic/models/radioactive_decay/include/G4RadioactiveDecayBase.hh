@@ -57,11 +57,12 @@
 class G4Fragment;
 class G4RadioactiveDecayBaseMessenger;
 class G4PhotonEvaporation;
+class G4TwoPhotonEvaporation;
 
 typedef std::map<G4String, G4DecayTable*> DecayTableMap;
 
 
-class G4RadioactiveDecayBase : public G4VRestDiscreteProcess 
+class G4RadioactiveDecayBase : public G4VRestDiscreteProcess
 {
   // class description
 
@@ -71,7 +72,7 @@ class G4RadioactiveDecayBase : public G4VRestDiscreteProcess
   // the Radioactivity database which was derived from ENSDF.
   // All decay products are submitted back to the particle tracking process
   // through the G4ParticleChangeForRadDecay object.
-  // class description - end 
+  // class description - end
 
   public: // with description
 
@@ -101,7 +102,7 @@ class G4RadioactiveDecayBase : public G4VRestDiscreteProcess
     void DeselectAllVolumes();
 
     // Enable/disable ICM
-    void SetICM(G4bool icm) {applyICM = icm;} 
+    void SetICM(G4bool icm) {applyICM = icm;}
 
     // Enable/disable ARM
     void SetARM(G4bool arm) {applyARM = arm;}
@@ -133,7 +134,7 @@ class G4RadioactiveDecayBase : public G4VRestDiscreteProcess
     }
 
     inline const G4ThreeVector& GetDecayDirection() const {
-      return forceDecayDirection; 
+      return forceDecayDirection;
     }
 
     inline void SetDecayHalfAngle(G4double halfAngle=0.*CLHEP::deg) {
@@ -177,6 +178,7 @@ class G4RadioactiveDecayBase : public G4VRestDiscreteProcess
 
     G4RadioactiveDecayBaseMessenger* theRadioactiveDecayBaseMessenger;
     G4PhotonEvaporation* photonEvaporation;
+    G4TwoPhotonEvaporation* twoPhotonEvaporation;
 
     std::vector<G4String> ValidVolumes;
     bool isAllVolumesMode;
@@ -208,7 +210,7 @@ class G4RadioactiveDecayBase : public G4VRestDiscreteProcess
     G4double      forceDecayHalfAngle;
     static const G4ThreeVector origin;	// (0,0,0) for convenience
 
-    // Radioactive decay database directory path 
+    // Radioactive decay database directory path
     G4String dirPath;
 
     //User define radioactive decay data files replacing some files in the G4RADECAY database
@@ -228,7 +230,7 @@ class G4RadioactiveDecayBase : public G4VRestDiscreteProcess
     G4int verboseLevel;
 
 
-    // inline implementations 
+    // inline implementations
     inline
     G4double AtRestGetPhysicalInteractionLength(const G4Track& track,
                                                 G4ForceCondition* condition)
@@ -257,4 +259,3 @@ class G4RadioactiveDecayBase : public G4VRestDiscreteProcess
 };
 
 #endif
-
