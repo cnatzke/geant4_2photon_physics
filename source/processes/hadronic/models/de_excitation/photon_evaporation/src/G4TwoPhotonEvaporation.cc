@@ -511,8 +511,8 @@ G4TwoPhotonEvaporation::GenerateGammas(G4Fragment *nucleus)
     {
         // G4double eGamma1 = eTransTotal
         G4double eGamma1 = eTransTotal * energySpectrumSampler->shoot(G4Random::getTheEngine());
-        G4cout << "--> Sampled gamma energy: " << eGamma1 << G4endl;
-        // G4double eGamma1 = 700;
+        // G4cout << "--> Sampled gamma energy: " << eGamma1 / CLHEP::keV << " keV" << G4endl;
+        //  G4double eGamma1 = 700;
         if (eGamma1 < 0.0)
             eGamma1 = 0.;
         if (eGamma1 > eTransTotal)
@@ -553,24 +553,24 @@ G4TwoPhotonEvaporation::GenerateGammas(G4Fragment *nucleus)
             nucleus->SetFloatingLevelNumber(fLevelManager->FloatingLevel(fIndex));
         }
 
-        delete energySpectrumSampler;
-    }
+        if (fVerbose > 1)
+        {
+            G4cout << "Final level E= " << efinal << " time= " << time
+                   << " idxFinal= " << fIndex << " isDiscrete: " << isDiscrete
+                   << " isGamma: " << isGamma << " multiP= " << multiP
+                   << " shell= " << vShellNumber
+                   << " JP1= " << JP1 << " JP2= " << JP2 << G4endl;
+        }
+        if (fVerbose > 1)
+        {
+            G4cout << G4endl;
+            G4cout << "----------------> TWO PHOTON DECAY <---------------" << G4endl;
+            G4cout << "gamma energies: " << eGamma1 / CLHEP::keV << " | " << eGamma2 / CLHEP::keV << G4endl;
+            G4cout << "total energy: " << eTransTotal / CLHEP::keV << G4endl;
+            G4cout << G4endl;
+        }
 
-    if (fVerbose > 1)
-    {
-        G4cout << "Final level E= " << efinal << " time= " << time
-               << " idxFinal= " << fIndex << " isDiscrete: " << isDiscrete
-               << " isGamma: " << isGamma << " multiP= " << multiP
-               << " shell= " << vShellNumber
-               << " JP1= " << JP1 << " JP2= " << JP2 << G4endl;
-    }
-    if (fVerbose > 1)
-    {
-        G4cout << G4endl;
-        G4cout << "----------------> TWO PHOTON DECAY <---------------" << G4endl;
-        G4cout << "gamma energies: " << eGamma1 / CLHEP::keV << " | " << eGamma2 / CLHEP::keV << G4endl;
-        G4cout << "total energy: " << eTransTotal / CLHEP::keV << G4endl;
-        G4cout << G4endl;
+        energySpectrumSampler = NULL;
     }
 
     return products;
@@ -602,11 +602,13 @@ void G4TwoPhotonEvaporation::SetUpEnergySpectrumSampler(G4double transitionEnerg
         G4int npti = 100;
         G4double *pdf = new G4double[npti];
 
-        // e : energy of one photon
+        G4double e; // energy of one photon
+        G4double f; // normalized pdf
         for (G4int ptn = 0; ptn < npti; ptn++)
         {
             // Calculate simple phase space
-            e = 1. + e0 * (G4double(ptn) + 0.5) / G4double(npti);
+            // e = 1. + transitionEnergy * (G4double(ptn) + 0.5) / G4double(npti);
+            e = transitionEnergy * G4double(ptn) / G4double(npti);
 
             // Build numberical pdf
             // Normalized pdf for pure dipole transition
@@ -616,8 +618,6 @@ void G4TwoPhotonEvaporation::SetUpEnergySpectrumSampler(G4double transitionEnerg
         energySpectrumSampler = new G4RandGeneral(pdf, npti);
         delete[] pdf;
     }
-
-    G4cout << "---> SetUpEnergySpectrumSampler " << transitionEnergy << G4endl;
 }
 
 void G4TwoPhotonEvaporation::SetGammaTransition(G4GammaTransition *p)
