@@ -48,76 +48,78 @@
 #include "G4LevelManager.hh"
 #include "G4Fragment.hh"
 #include "G4Threading.hh"
+#include "Randomize.hh"
 
-//const G4int MAXDEPOINT = 10;
-//const G4int MAXGRDATA  = 300;
+// const G4int MAXDEPOINT = 10;
+// const G4int MAXGRDATA  = 300;
 
 class G4GammaTransition;
 class G4NuclearPolarizationStore;
 
-class G4TwoPhotonEvaporation : public G4VEvaporationChannel {
+class G4TwoPhotonEvaporation : public G4VEvaporationChannel
+{
 
 public:
-
-  explicit G4TwoPhotonEvaporation(G4GammaTransition* ptr=nullptr);
+  explicit G4TwoPhotonEvaporation(G4GammaTransition *ptr = nullptr);
 
   virtual ~G4TwoPhotonEvaporation();
 
   virtual void Initialise() final;
 
   // two-photon emission
-  virtual G4FragmentVector* EmittedFragments(G4Fragment* theNucleus) final;
+  virtual G4FragmentVector *EmittedFragments(G4Fragment *theNucleus) final;
 
   // returns "false", emitted gamma and e- are added to the results
   virtual G4bool
-  BreakUpChain(G4FragmentVector* theResult, G4Fragment* theNucleus) final;
+  BreakUpChain(G4FragmentVector *theResult, G4Fragment *theNucleus) final;
 
   // emitted gamma, e-, and residual fragment are added to the results
-  G4FragmentVector* BreakItUp(const G4Fragment& theNucleus);
+  G4FragmentVector *BreakItUp(const G4Fragment &theNucleus);
 
   // compute emission probability for both continum and discrete cases
   // must be called before any method above
-  virtual G4double GetEmissionProbability(G4Fragment* theNucleus) final;
+  virtual G4double GetEmissionProbability(G4Fragment *theNucleus) final;
 
   virtual G4double GetFinalLevelEnergy(G4int Z, G4int A, G4double energy) final;
 
   virtual G4double GetUpperLevelEnergy(G4int Z, G4int A) final;
 
-  void SetGammaTransition(G4GammaTransition*);
+  void SetGammaTransition(G4GammaTransition *);
 
-  virtual void RDMForced (G4bool);
+  virtual void RDMForced(G4bool);
 
   inline void SetVerboseLevel(G4int verbose);
 
   inline G4int GetVacantShellNumber() const;
 
 private:
-
   void InitialiseGRData();
 
-  G4FragmentVector* GenerateGammas(G4Fragment* nucleus);
+  G4FragmentVector *GenerateGammas(G4Fragment *nucleus);
+
+  void SetUpEnergySpectrumSampler(G4double transitionEnergy);
 
   inline void InitialiseLevelManager(G4int Z, G4int A);
 
-  G4TwoPhotonEvaporation(const G4TwoPhotonEvaporation & right) = delete;
-  const G4TwoPhotonEvaporation & operator = (const G4TwoPhotonEvaporation & right) = delete;
+  G4TwoPhotonEvaporation(const G4TwoPhotonEvaporation &right) = delete;
+  const G4TwoPhotonEvaporation &operator=(const G4TwoPhotonEvaporation &right) = delete;
 
-  G4NuclearLevelData*   fNuclearLevelData;
-  const G4LevelManager* fLevelManager;
-  G4GammaTransition*    fTransition;
-  G4NuclearPolarizationStore* fNucPStore;
+  G4NuclearLevelData *fNuclearLevelData;
+  const G4LevelManager *fLevelManager;
+  G4GammaTransition *fTransition;
+  G4NuclearPolarizationStore *fNucPStore;
 
   // fPolarization stores polarization tensor for consecutive
   // decays of a nucleus
-  G4NuclearPolarization* fPolarization;
+  G4NuclearPolarization *fPolarization;
 
-  G4int    fVerbose;
-  G4int    theZ;
-  G4int    theA;
-  G4int    fPoints;
-  G4int    fCode;
-  G4int    vShellNumber;
-  size_t   fIndex;
+  G4int fVerbose;
+  G4int theZ;
+  G4int theA;
+  G4int fPoints;
+  G4int fCode;
+  G4int vShellNumber;
+  size_t fIndex;
 
   static G4float GREnergy[MAXGRDATA];
   static G4float GRWidth[MAXGRDATA];
@@ -133,10 +135,12 @@ private:
   G4double LevelDensity;
   G4double Tolerance;
 
-  G4bool   fRDM;
-  G4bool   fSampleTime;
-  G4bool   fCorrelatedGamma;
-  G4bool   isInitialised;
+  G4bool fRDM;
+  G4bool fSampleTime;
+  G4bool fCorrelatedGamma;
+  G4bool isInitialised;
+
+  G4RandGeneral *energySpectrumSampler;
 
 #ifdef G4MULTITHREADED
   static G4Mutex PhotonEvaporationMutex;
@@ -151,7 +155,8 @@ inline void G4TwoPhotonEvaporation::SetVerboseLevel(G4int verbose)
 inline void
 G4TwoPhotonEvaporation::InitialiseLevelManager(G4int Z, G4int A)
 {
-  if(Z != theZ || A != theA) {
+  if (Z != theZ || A != theA)
+  {
     theZ = Z;
     theA = A;
     fIndex = 0;

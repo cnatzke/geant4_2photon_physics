@@ -52,10 +52,9 @@
 #include "G4SystemOfUnits.hh"
 #include "G4PhysicalConstants.hh"
 
-
-G4TwoPhotonDecay::G4TwoPhotonDecay(const G4ParticleDefinition* theParentNucleus,
-                                   const G4double& branch, const G4double& Qvalue,
-                                   const G4double& excitationE, G4TwoPhotonEvaporation* aPhotoEvap)
+G4TwoPhotonDecay::G4TwoPhotonDecay(const G4ParticleDefinition *theParentNucleus,
+                                   const G4double &branch, const G4double &Qvalue,
+                                   const G4double &excitationE, G4TwoPhotonEvaporation *aPhotoEvap)
     : G4NuclearDecay("Two-photon decay", TwoPhoton, excitationE, noFloat), transitionQ(Qvalue), twoPhotonEvaporation(aPhotoEvap)
 {
     SetParent(theParentNucleus); // Store name of parent nucleus, delete G4MT_parent
@@ -65,18 +64,16 @@ G4TwoPhotonDecay::G4TwoPhotonDecay(const G4ParticleDefinition* theParentNucleus,
     parentA = theParentNucleus->GetAtomicMass();
 
     SetNumberOfDaughters(1);
-    G4IonTable* theIonTable =
-        (G4IonTable*)(G4ParticleTable::GetParticleTable()->GetIonTable());
-    SetDaughter(0, theIonTable->GetIon(parentZ, parentA, excitationE, noFloat) );
+    G4IonTable *theIonTable =
+        (G4IonTable *)(G4ParticleTable::GetParticleTable()->GetIonTable());
+    SetDaughter(0, theIonTable->GetIon(parentZ, parentA, excitationE, noFloat));
 }
-
 
 G4TwoPhotonDecay::~G4TwoPhotonDecay()
 {
 }
 
-
-G4DecayProducts* G4TwoPhotonDecay::DecayIt(G4double)
+G4DecayProducts *G4TwoPhotonDecay::DecayIt(G4double)
 {
     // Fill G4MT_parent with theParentNucleus (stored by SetParent in ctor)
     CheckAndFillParent();
@@ -85,30 +82,32 @@ G4DecayProducts* G4TwoPhotonDecay::DecayIt(G4double)
     // parentParticle is set at rest here because boost with correct momentum
     // is done later
     G4LorentzVector atRest(G4MT_parent->GetPDGMass(),
-                           G4ThreeVector(0.,0.,0.) );
+                           G4ThreeVector(0., 0., 0.));
     G4DynamicParticle parentParticle(G4MT_parent, atRest);
-    G4DecayProducts* products = new G4DecayProducts(parentParticle);
+    G4DecayProducts *products = new G4DecayProducts(parentParticle);
 
     // Let G4TwoPhotonEvaporation do the decay
     G4Fragment parentNucleus(parentA, parentZ, atRest);
 
-    //twoPhotonEvaporation->SetVerboseLevel(2);
-    G4FragmentVector* emittedGammas = twoPhotonEvaporation->EmittedFragments(&parentNucleus);
+    // twoPhotonEvaporation->SetVerboseLevel(2);
+    G4FragmentVector *emittedGammas = twoPhotonEvaporation->EmittedFragments(&parentNucleus);
 
     // Modified nuclide is returned as dynDaughter
-    G4IonTable* theIonTable =
-        (G4IonTable*)(G4ParticleTable::GetParticleTable()->GetIonTable() );
-    G4ParticleDefinition* daughterIon =
+    G4IonTable *theIonTable =
+        (G4IonTable *)(G4ParticleTable::GetParticleTable()->GetIonTable());
+    G4ParticleDefinition *daughterIon =
         theIonTable->GetIon(parentZ, parentA, parentNucleus.GetExcitationEnergy(),
                             G4Ions::FloatLevelBase(parentNucleus.GetFloatingLevelNumber()));
-    G4DynamicParticle* dynDaughter = new G4DynamicParticle(daughterIon,
+    G4DynamicParticle *dynDaughter = new G4DynamicParticle(daughterIon,
                                                            parentNucleus.GetMomentum());
 
     // Write gammas to products vector
-    if (emittedGammas) {
-        for(size_t i = 0; i < emittedGammas->size(); i++) {
-            G4DynamicParticle* emittedGammaDyn = new G4DynamicParticle(emittedGammas->at(i)->GetParticleDefinition(), emittedGammas->at(i)->GetMomentum() );
-            emittedGammaDyn->SetProperTime(emittedGammas->at(i)->GetCreationTime() );
+    if (emittedGammas)
+    {
+        for (size_t i = 0; i < emittedGammas->size(); i++)
+        {
+            G4DynamicParticle *emittedGammaDyn = new G4DynamicParticle(emittedGammas->at(i)->GetParticleDefinition(), emittedGammas->at(i)->GetMomentum());
+            emittedGammaDyn->SetProperTime(emittedGammas->at(i)->GetCreationTime());
             products->PushProducts(emittedGammaDyn);
         }
         delete emittedGammas;
@@ -131,7 +130,6 @@ G4DecayProducts* G4TwoPhotonDecay::DecayIt(G4double)
 
     return products;
 }
-
 
 void G4TwoPhotonDecay::DumpNuclearInfo()
 {
