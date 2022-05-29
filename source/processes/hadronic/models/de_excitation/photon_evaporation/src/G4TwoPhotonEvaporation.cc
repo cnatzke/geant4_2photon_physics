@@ -509,10 +509,9 @@ G4TwoPhotonEvaporation::GenerateGammas(G4Fragment *nucleus)
 
     if (energySpectrumSampler)
     {
-        // G4double eGamma1 = eTransTotal
+        // Sample energy from known energy distribution
         G4double eGamma1 = eTransTotal * energySpectrumSampler->shoot(G4Random::getTheEngine());
         // G4cout << "--> Sampled gamma energy: " << eGamma1 / CLHEP::keV << " keV" << G4endl;
-        //  G4double eGamma1 = 700;
         if (eGamma1 < 0.0)
             eGamma1 = 0.;
         if (eGamma1 > eTransTotal)
@@ -578,24 +577,6 @@ G4TwoPhotonEvaporation::GenerateGammas(G4Fragment *nucleus)
 
 void G4TwoPhotonEvaporation::SetUpEnergySpectrumSampler(G4double transitionEnergy)
 {
-    /*
-    std::ifstream fin;
-    fin.open("/home/cnatzke/simulations/two-photon/geant-examples/rdecay01/source/user-data/cdf_mapping.csv", std::ios::in);
-
-    std::vector<std::string> row;
-    std::string line, word, temp;
-    while (!fin.eof())
-    {
-        row.clear();
-        std::getline(fin, line);
-        std::stringstream s(line);
-        while (getline(s, word, ','))
-        {
-            G4cout << "----> " << word << std::endl;
-            row.push_back(word);
-        }
-    }
-    */
     if (transitionEnergy > 0)
     {
         // Array to store spectrum pdf
@@ -606,8 +587,7 @@ void G4TwoPhotonEvaporation::SetUpEnergySpectrumSampler(G4double transitionEnerg
         G4double f; // normalized pdf
         for (G4int ptn = 0; ptn < npti; ptn++)
         {
-            // Calculate simple phase space
-            // e = 1. + transitionEnergy * (G4double(ptn) + 0.5) / G4double(npti);
+            // Sample energy range
             e = transitionEnergy * G4double(ptn) / G4double(npti);
 
             // Build numberical pdf
