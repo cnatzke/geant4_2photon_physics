@@ -222,6 +222,7 @@ G4RadioactiveDecay::G4RadioactiveDecay(const G4String &processName)
 
     // Reset the list of user defined data files
     theUserRadioactiveDataFiles.clear();
+    theUserTwoPhotonDataFiles.clear();
 
     // Instantiate the map of decay tables
 #ifdef G4MULTITHREADED
@@ -902,6 +903,7 @@ G4RadioactiveDecay::LoadDecayTable(const G4ParticleDefinition &theParentNucleus)
 
     // Check if data have been provided by the user
     G4String file = theUserRadioactiveDataFiles[1000 * A + Z];
+    G4String two_photon_file = theUserTwoPhotonDataFiles[1000 * A + Z];
 
     if (file == "")
     {
@@ -1058,10 +1060,19 @@ G4RadioactiveDecay::LoadDecayTable(const G4ParticleDefinition &theParentNucleus)
                             break;
                         case TwoPhoton:
                         {
-                            G4TwoPhotonDecay *aTwoPhotonChannel = new G4TwoPhotonDecay(&theParentNucleus, decayModeTotal, 0.0, 0.0, twoPhotonEvaporation);
-                            aTwoPhotonChannel->SetHLThreshold(halflifethreshold);
-                            theDecayTable->Insert(aTwoPhotonChannel);
-                            // aTwoPhotonChannel->DumpNuclearInfo();
+
+                            // TODO : Need to finish passing datafile to 2photon class for parsing
+                            std::ifstream TwoPhotonDataFile;
+                            TwoPhotonDataFile.open(file);
+
+                            if (TwoPhotonDataFile.good())
+                            {
+                                G4String data_file = theUserTwoPhotonDataFiles[1000 * A + Z];
+                                G4TwoPhotonDecay *aTwoPhotonChannel = new G4TwoPhotonDecay(&theParentNucleus, decayModeTotal, 0.0, 0.0, twoPhotonEvaporation, &data_file);
+                                aTwoPhotonChannel->SetHLThreshold(halflifethreshold);
+                                theDecayTable->Insert(aTwoPhotonChannel);
+                                // aTwoPhotonChannel->DumpNuclearInfo();
+                            }
                         }
                         break;
                         case RDM_ERROR:
@@ -1337,9 +1348,8 @@ void G4RadioactiveDecay::AddUserTwoPhotonDataFile(G4int Z, G4int A, G4String fil
     std::ifstream TwoPhotonFile(filename);
     if (TwoPhotonFile)
     {
-        // G4int ID_ion = A * 1000 + Z;
-        // theUserRadioactiveDataFiles[ID_ion] = filename;
-        G4cout << "--> Found two-photon decay file: " << filename << G4endl;
+        G4int ID_ion = A * 1000 + Z;
+        theUserTwoPhotonDataFiles[ID_ion] = filename;
     }
     else
     {

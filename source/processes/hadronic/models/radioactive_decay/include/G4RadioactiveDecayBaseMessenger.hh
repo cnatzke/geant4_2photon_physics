@@ -87,6 +87,7 @@ private:
   G4UIcommand *userDecayDataCmd;
   G4UIcommand *old_userEvaporationDataCmd; // To be removed in G4 11.0
   G4UIcommand *userEvaporationDataCmd;
+  G4UIcommand *userTwoPhotonDataCmd;
   G4UIcmdWith3Vector *old_colldirCmd; // To be removed in G4 11.0
   G4UIcmdWith3Vector *colldirCmd;
   G4UIcmdWithADoubleAndUnit *old_collangleCmd; // To be removed in G4 11.0

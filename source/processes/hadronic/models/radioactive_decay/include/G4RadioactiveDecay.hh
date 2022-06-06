@@ -338,6 +338,9 @@ private:
   // User-defined radioactive decay data files
   std::map<G4int, G4String> theUserRadioactiveDataFiles;
 
+  // User-defined two-photon decay data files
+  std::map<G4int, G4String> theUserTwoPhotonDataFiles;
+
   // The last RadDecayMode
   G4RadioactiveDecayMode theRadDecayMode;
 

@@ -279,7 +279,6 @@ G4RadioactiveDecaymessenger::G4RadioactiveDecaymessenger(G4RadioactiveDecay *the
   userEvaporationDataCmd->SetParameter(A_para_);
   userEvaporationDataCmd->SetParameter(FileName_para_);
 
-  // CRN
   userTwoPhotonDataCmd = new G4UIcommand("/process/had/rdm/setTwoPhotonFile", this);
   G4UIparameter *Z_para__ = new G4UIparameter("Z_isotope", 'i', true);
   Z_para__->SetParameterRange("Z_isotope > 0");
@@ -292,7 +291,6 @@ G4RadioactiveDecaymessenger::G4RadioactiveDecaymessenger(G4RadioactiveDecay *the
   userTwoPhotonDataCmd->SetParameter(Z_para__);
   userTwoPhotonDataCmd->SetParameter(A_para__);
   userTwoPhotonDataCmd->SetParameter(FileName_para__);
-  // end CRN
 }
 ////////////////////////////////////////////////////////////////////////////////
 //

@@ -211,6 +211,19 @@ G4RadioactiveDecayBaseMessenger::G4RadioactiveDecayBaseMessenger(G4RadioactiveDe
   userEvaporationDataCmd->SetParameter(Zpara);
   userEvaporationDataCmd->SetParameter(Apara);
   userEvaporationDataCmd->SetParameter(FileNamepara);
+
+  userTwoPhotonDataCmd = new G4UIcommand("/process/had/rdm/setTwoPhotonFile", this);
+  G4UIparameter *Z_para__ = new G4UIparameter("Z_isotope", 'i', true);
+  Z_para__->SetParameterRange("Z_isotope > 0");
+  Z_para__->SetGuidance("Z: Charge number of isotope");
+  G4UIparameter *A_para__ = new G4UIparameter("A_isotope", 'i', true);
+  A_para__->SetParameterRange("A_isotope > 1");
+  A_para__->SetGuidance("A: mass number of isotope");
+  G4UIparameter *FileName_para__ = new G4UIparameter("file_name", 's', true);
+  FileName_para__->SetGuidance("Name of the user data file");
+  userTwoPhotonDataCmd->SetParameter(Z_para__);
+  userTwoPhotonDataCmd->SetParameter(A_para__);
+  userTwoPhotonDataCmd->SetParameter(FileName_para__);
 }
 
 G4RadioactiveDecayBaseMessenger::~G4RadioactiveDecayBaseMessenger()
