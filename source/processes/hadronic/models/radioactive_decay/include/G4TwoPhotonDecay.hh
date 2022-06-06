@@ -47,22 +47,24 @@ class G4TwoPhotonEvaporation;
 class G4TwoPhotonDecay : public G4NuclearDecay
 {
 public:
-G4TwoPhotonDecay(const G4ParticleDefinition* theParentNucleus,
-          const G4double& theBR, const G4double& Qvalue,
-          const G4double& excitation, G4TwoPhotonEvaporation* aPhotonEvap);
+    G4TwoPhotonDecay(const G4ParticleDefinition *theParentNucleus,
+                     const G4double &theBR, const G4double &Qvalue,
+                     const G4double &excitation, G4TwoPhotonEvaporation *aPhotonEvap);
 
-virtual ~G4TwoPhotonDecay();
+    virtual ~G4TwoPhotonDecay();
 
-virtual G4DecayProducts* DecayIt(G4double);
+    virtual G4DecayProducts *DecayIt(G4double);
 
-virtual void DumpNuclearInfo();
+    void ReadInTwoPhotonParameters(G4int Z, G4int A, const G4String &filename);
+
+    virtual void DumpNuclearInfo();
 
 private:
-const G4double transitionQ;
-G4int parentZ;
-G4int parentA;
+    const G4double transitionQ;
+    G4int parentZ;
+    G4int parentA;
 
-G4TwoPhotonEvaporation* twoPhotonEvaporation;
+    G4TwoPhotonEvaporation *twoPhotonEvaporation;
 };
 
 #endif

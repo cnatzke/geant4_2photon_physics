@@ -131,6 +131,21 @@ G4DecayProducts *G4TwoPhotonDecay::DecayIt(G4double)
     return products;
 }
 
+void G4TwoPhotonDecay::ReadInTwoPhotonParameters(G4int Z, G4int A, const G4String &filename)
+{
+    std::ifstream infile(filename, std::ios::in);
+    if (!infile.is_open())
+    {
+        G4ExceptionDescription ed;
+        ed << "User file for Z= " << Z << " A= " << A
+           << " is not opened!";
+        G4Exception("G4LevelReader::MakeLevelManager(..)", "had014",
+                    FatalException, ed, "");
+        // return nullptr;
+    }
+    // return LevelManager(Z, A, 0, infile);
+}
+
 void G4TwoPhotonDecay::DumpNuclearInfo()
 {
     G4cout << " G4TwoPhotonDecay for parent nucleus " << GetParentName() << G4endl;

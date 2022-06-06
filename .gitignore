@@ -100,10 +100,8 @@ source/processes/hadronic/models/radioactive_decay/include/G4NucleusLimits.hh
 source/processes/hadronic/models/radioactive_decay/include/G4ProtonDecay.hh
 source/processes/hadronic/models/radioactive_decay/include/G4Radioactivation.hh
 source/processes/hadronic/models/radioactive_decay/include/G4RadioactivationMessenger.hh
-source/processes/hadronic/models/radioactive_decay/include/G4RadioactiveDecayBaseMessenger.hh
 source/processes/hadronic/models/radioactive_decay/include/G4RadioactiveDecayChainsFromParent.hh
 source/processes/hadronic/models/radioactive_decay/include/G4RadioactiveDecayRatesToDaughter.hh
-source/processes/hadronic/models/radioactive_decay/include/G4RadioactiveDecaymessenger.hh
 source/processes/hadronic/models/radioactive_decay/include/G4RadioactivityTable.hh
 source/processes/hadronic/models/radioactive_decay/include/G4SFDecay.hh
 source/processes/hadronic/models/radioactive_decay/include/G4TritonDecay.hh
@@ -123,10 +121,8 @@ source/processes/hadronic/models/radioactive_decay/src/G4NucleusLimits.cc
 source/processes/hadronic/models/radioactive_decay/src/G4ProtonDecay.cc
 source/processes/hadronic/models/radioactive_decay/src/G4Radioactivation.cc
 source/processes/hadronic/models/radioactive_decay/src/G4RadioactivationMessenger.cc
-source/processes/hadronic/models/radioactive_decay/src/G4RadioactiveDecayBaseMessenger.cc
 source/processes/hadronic/models/radioactive_decay/src/G4RadioactiveDecayChainsFromParent.cc
 source/processes/hadronic/models/radioactive_decay/src/G4RadioactiveDecayRatesToDaughter.cc
-source/processes/hadronic/models/radioactive_decay/src/G4RadioactiveDecaymessenger.cc
 source/processes/hadronic/models/radioactive_decay/src/G4RadioactivityTable.cc
 source/processes/hadronic/models/radioactive_decay/src/G4SFDecay.cc
 source/processes/hadronic/models/radioactive_decay/src/G4TritonDecay.cc
