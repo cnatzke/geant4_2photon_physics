@@ -49,7 +49,7 @@ class G4TwoPhotonDecay : public G4NuclearDecay
 public:
     G4TwoPhotonDecay(const G4ParticleDefinition *theParentNucleus,
                      const G4double &theBR, const G4double &Qvalue,
-                     const G4double &excitation, G4TwoPhotonEvaporation *aPhotonEvap);
+                     const G4double &excitation, G4TwoPhotonEvaporation *aPhotonEvap, const G4String &dataFile);
 
     virtual ~G4TwoPhotonDecay();
 

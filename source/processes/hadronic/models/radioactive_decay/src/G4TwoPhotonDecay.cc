@@ -54,7 +54,7 @@
 
 G4TwoPhotonDecay::G4TwoPhotonDecay(const G4ParticleDefinition *theParentNucleus,
                                    const G4double &branch, const G4double &Qvalue,
-                                   const G4double &excitationE, G4TwoPhotonEvaporation *aPhotoEvap)
+                                   const G4double &excitationE, G4TwoPhotonEvaporation *aPhotoEvap, const G4String &dataFile)
     : G4NuclearDecay("Two-photon decay", TwoPhoton, excitationE, noFloat), transitionQ(Qvalue), twoPhotonEvaporation(aPhotoEvap)
 {
     SetParent(theParentNucleus); // Store name of parent nucleus, delete G4MT_parent

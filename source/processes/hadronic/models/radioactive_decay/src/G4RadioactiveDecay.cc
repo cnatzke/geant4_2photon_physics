@@ -1060,19 +1060,22 @@ G4RadioactiveDecay::LoadDecayTable(const G4ParticleDefinition &theParentNucleus)
                             break;
                         case TwoPhoton:
                         {
-
-                            // TODO : Need to finish passing datafile to 2photon class for parsing
                             std::ifstream TwoPhotonDataFile;
-                            TwoPhotonDataFile.open(file);
+                            TwoPhotonDataFile.open(two_photon_file);
 
                             if (TwoPhotonDataFile.good())
                             {
-                                G4String data_file = theUserTwoPhotonDataFiles[1000 * A + Z];
-                                G4TwoPhotonDecay *aTwoPhotonChannel = new G4TwoPhotonDecay(&theParentNucleus, decayModeTotal, 0.0, 0.0, twoPhotonEvaporation, &data_file);
+                                G4TwoPhotonDecay *aTwoPhotonChannel = new G4TwoPhotonDecay(&theParentNucleus, decayModeTotal, 0.0, 0.0, twoPhotonEvaporation, two_photon_file);
                                 aTwoPhotonChannel->SetHLThreshold(halflifethreshold);
                                 theDecayTable->Insert(aTwoPhotonChannel);
                                 // aTwoPhotonChannel->DumpNuclearInfo();
                             }
+                            else
+                            {
+                                G4Exception("G4RadioactiveDecay::TwoPhotonDecay()", "HAD_RDM_000", FatalException, "Missing two-photon decay file");
+                            }
+
+                            TwoPhotonDataFile.close();
                         }
                         break;
                         case RDM_ERROR:
