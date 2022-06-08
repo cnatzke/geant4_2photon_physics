@@ -67,6 +67,8 @@ G4TwoPhotonDecay::G4TwoPhotonDecay(const G4ParticleDefinition *theParentNucleus,
     G4IonTable *theIonTable =
         (G4IonTable *)(G4ParticleTable::GetParticleTable()->GetIonTable());
     SetDaughter(0, theIonTable->GetIon(parentZ, parentA, excitationE, noFloat));
+
+    ReadInTwoPhotonParameters(parentZ, parentA, dataFile);
 }
 
 G4TwoPhotonDecay::~G4TwoPhotonDecay()
@@ -133,17 +135,37 @@ G4DecayProducts *G4TwoPhotonDecay::DecayIt(G4double)
 
 void G4TwoPhotonDecay::ReadInTwoPhotonParameters(G4int Z, G4int A, const G4String &filename)
 {
+
+    fVerbose = 4;
+
     std::ifstream infile(filename, std::ios::in);
+
+    // safety check
     if (!infile.is_open())
     {
         G4ExceptionDescription ed;
         ed << "User file for Z= " << Z << " A= " << A
            << " is not opened!";
-        G4Exception("G4LevelReader::MakeLevelManager(..)", "had014",
+        G4Exception("G4TwoPhotonDecay::ReadInTwoPhotonParameters(..)", "had014",
                     FatalException, ed, "");
         // return nullptr;
     }
-    // return LevelManager(Z, A, 0, infile);
+    // file is open
+    else
+    {
+        // read in header line
+        infile >> fLevelIndex >> fEnergy >> fMultiMixing;
+        while (!infile.eof())
+        {
+            infile >> fLevelIndex >> fEnergy >> fMultiMixing;
+        }
+        if (fVerbose > 1)
+        {
+            G4cout << "G4TwoPhotonDecay: open file for Z= "
+                   << Z << " A= " << A << G4endl;
+        }
+    }
+    infile.close();
 }
 
 void G4TwoPhotonDecay::DumpNuclearInfo()

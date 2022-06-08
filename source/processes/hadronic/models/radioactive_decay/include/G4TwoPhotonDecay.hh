@@ -65,6 +65,13 @@ private:
     G4int parentA;
 
     G4TwoPhotonEvaporation *twoPhotonEvaporation;
+
+    G4int fVerbose;
+    G4int fLevelIndex;
+
+    G4float fMultiMixing;
+
+    G4double fEnergy;
 };
 
 #endif

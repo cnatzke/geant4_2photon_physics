@@ -903,7 +903,7 @@ G4RadioactiveDecay::LoadDecayTable(const G4ParticleDefinition &theParentNucleus)
 
     // Check if data have been provided by the user
     G4String file = theUserRadioactiveDataFiles[1000 * A + Z];
-    G4String two_photon_file = theUserTwoPhotonDataFiles[1000 * A + Z];
+    G4String twoPhotonFile = theUserTwoPhotonDataFiles[1000 * A + Z];
 
     if (file == "")
     {
@@ -1061,12 +1061,11 @@ G4RadioactiveDecay::LoadDecayTable(const G4ParticleDefinition &theParentNucleus)
                         case TwoPhoton:
                         {
                             std::ifstream TwoPhotonDataFile;
-                            TwoPhotonDataFile.open(two_photon_file);
-                            G4cout << "--> Two photon file: " << two_photon_file << G4endl;
+                            TwoPhotonDataFile.open(twoPhotonFile);
 
                             if (TwoPhotonDataFile.good())
                             {
-                                G4TwoPhotonDecay *aTwoPhotonChannel = new G4TwoPhotonDecay(&theParentNucleus, decayModeTotal, 0.0, 0.0, twoPhotonEvaporation, two_photon_file);
+                                G4TwoPhotonDecay *aTwoPhotonChannel = new G4TwoPhotonDecay(&theParentNucleus, decayModeTotal, 0.0, 0.0, twoPhotonEvaporation, twoPhotonFile);
                                 aTwoPhotonChannel->SetHLThreshold(halflifethreshold);
                                 theDecayTable->Insert(aTwoPhotonChannel);
                                 // aTwoPhotonChannel->DumpNuclearInfo();
