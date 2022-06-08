@@ -250,6 +250,7 @@ G4RadioactiveDecayBaseMessenger::~G4RadioactiveDecayBaseMessenger()
   delete userDecayDataCmd;           //<---
   delete old_userEvaporationDataCmd; // To be removed in G4 11.0
   delete userEvaporationDataCmd;
+  delete userTwoPhotonDataCmd;
   delete old_colldirCmd; // To be removed in G4 11.0
   delete colldirCmd;
   delete old_collangleCmd; // To be removed in G4 11.0
@@ -416,6 +417,15 @@ void G4RadioactiveDecayBaseMessenger::SetNewValue(G4UIcommand *command, G4String
     std::istringstream is(nv);
     is >> Z >> A >> file_name;
     G4NuclearLevelData::GetInstance()->AddPrivateData(Z, A, file_name);
+  }
+  else if (command == userTwoPhotonDataCmd)
+  {
+    G4int Z, A;
+    G4String file_name;
+    const char *nv = (const char *)newValues;
+    std::istringstream is(nv);
+    is >> Z >> A >> file_name;
+    theRadioactiveDecayContainer->AddUserTwoPhotonDataFile(Z, A, file_name);
   }
   else if (command == colldirCmd)
   {

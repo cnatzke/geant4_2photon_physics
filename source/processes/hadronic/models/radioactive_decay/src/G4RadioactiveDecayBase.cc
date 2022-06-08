@@ -749,6 +749,7 @@ G4RadioactiveDecayBase::LoadDecayTable(const G4ParticleDefinition &theParentNucl
                         {
                             std::ifstream TwoPhotonDataFile;
                             TwoPhotonDataFile.open(two_photon_file);
+                            G4cout << "--> Two photon file: " << two_photon_file << G4endl;
 
                             if (TwoPhotonDataFile.good())
                             {
@@ -758,7 +759,7 @@ G4RadioactiveDecayBase::LoadDecayTable(const G4ParticleDefinition &theParentNucl
                             }
                             else
                             {
-                                G4Exception("G4RadioactiveDecay::TwoPhotonDecay()", "HAD_RDM_000", FatalException, "Missing two-photon decay file");
+                                G4Exception("G4RadioactiveDecayBase::TwoPhotonDecay()", "HAD_RDM_000", FatalException, "Missing two-photon decay file");
                             }
                             TwoPhotonDataFile.close();
                         }

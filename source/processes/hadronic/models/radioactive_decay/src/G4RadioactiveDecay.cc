@@ -1062,6 +1062,7 @@ G4RadioactiveDecay::LoadDecayTable(const G4ParticleDefinition &theParentNucleus)
                         {
                             std::ifstream TwoPhotonDataFile;
                             TwoPhotonDataFile.open(two_photon_file);
+                            G4cout << "--> Two photon file: " << two_photon_file << G4endl;
 
                             if (TwoPhotonDataFile.good())
                             {
