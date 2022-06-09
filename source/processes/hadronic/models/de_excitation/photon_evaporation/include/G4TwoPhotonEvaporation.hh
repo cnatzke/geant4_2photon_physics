@@ -135,6 +135,8 @@ private:
   G4double LevelDensity;
   G4double Tolerance;
 
+  G4float fMultipoleMixing;
+
   G4bool fRDM;
   G4bool fSampleTime;
   G4bool fCorrelatedGamma;
@@ -150,6 +152,12 @@ private:
 inline void G4TwoPhotonEvaporation::SetVerboseLevel(G4int verbose)
 {
   fVerbose = verbose;
+}
+
+inline void
+G4TwoPhotonEvaporation::SetMulitpoleMixingRatio(G4float &multipoleMixing)
+{
+  fMultipoleMixing = multipoleMixing;
 }
 
 inline void

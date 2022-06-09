@@ -61,17 +61,17 @@ public:
 
 private:
     const G4double transitionQ;
-    G4int parentZ;
-    G4int parentA;
 
     G4TwoPhotonEvaporation *twoPhotonEvaporation;
 
+    G4int parentZ;
+    G4int parentA;
     G4int fVerbose;
-    G4int fLevelIndex;
+    G4int levelIndex;
 
-    G4float fMultiMixing;
+    G4float multipoleMixing;
 
-    G4double fEnergy;
+    G4double energy;
 };
 
 #endif

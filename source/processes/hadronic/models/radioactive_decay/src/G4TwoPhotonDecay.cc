@@ -57,6 +57,8 @@ G4TwoPhotonDecay::G4TwoPhotonDecay(const G4ParticleDefinition *theParentNucleus,
                                    const G4double &excitationE, G4TwoPhotonEvaporation *aPhotoEvap, const G4String &dataFile)
     : G4NuclearDecay("Two-photon decay", TwoPhoton, excitationE, noFloat), transitionQ(Qvalue), twoPhotonEvaporation(aPhotoEvap)
 {
+    fVerbose = 1;
+
     SetParent(theParentNucleus); // Store name of parent nucleus, delete G4MT_parent
     SetBR(branch);
 
@@ -92,7 +94,7 @@ G4DecayProducts *G4TwoPhotonDecay::DecayIt(G4double)
     G4Fragment parentNucleus(parentA, parentZ, atRest);
 
     // twoPhotonEvaporation->SetVerboseLevel(2);
-    G4FragmentVector *emittedGammas = twoPhotonEvaporation->EmittedFragments(&parentNucleus);
+    G4FragmentVector *emittedGammas = twoPhotonEvaporation->EmittedFragments(&parentNucleus, levelIndex, energy, multipoleMixing);
 
     // Modified nuclide is returned as dynDaughter
     G4IonTable *theIonTable =
@@ -136,8 +138,6 @@ G4DecayProducts *G4TwoPhotonDecay::DecayIt(G4double)
 void G4TwoPhotonDecay::ReadInTwoPhotonParameters(G4int Z, G4int A, const G4String &filename)
 {
 
-    fVerbose = 4;
-
     std::ifstream infile(filename, std::ios::in);
 
     // safety check
@@ -154,10 +154,10 @@ void G4TwoPhotonDecay::ReadInTwoPhotonParameters(G4int Z, G4int A, const G4Strin
     else
     {
         // read in header line
-        infile >> fLevelIndex >> fEnergy >> fMultiMixing;
+        infile >> levelIndex >> energy >> multipoleMixing;
         while (!infile.eof())
         {
-            infile >> fLevelIndex >> fEnergy >> fMultiMixing;
+            infile >> levelIndex >> energy >> multipoleMixing;
         }
         if (fVerbose > 1)
         {
