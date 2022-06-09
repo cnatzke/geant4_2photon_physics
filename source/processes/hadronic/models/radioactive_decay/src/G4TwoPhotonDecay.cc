@@ -95,7 +95,7 @@ G4DecayProducts *G4TwoPhotonDecay::DecayIt(G4double)
 
     // twoPhotonEvaporation->SetVerboseLevel(2);
     // set the mixing ratio
-    twoPhotonEvaporation->SetMultipoleMixing(multipoleMixing);
+    twoPhotonEvaporation->SetMultipoleMixingRatio(multipoleMixing);
     G4FragmentVector *emittedGammas = twoPhotonEvaporation->EmittedFragments(&parentNucleus);
 
     // Modified nuclide is returned as dynDaughter

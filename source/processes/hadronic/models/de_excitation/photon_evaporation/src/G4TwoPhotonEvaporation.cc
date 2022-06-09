@@ -585,7 +585,7 @@ void G4TwoPhotonEvaporation::SetUpEnergySpectrumSampler(G4double transitionEnerg
 
         G4double e;             // energy of one photon
         G4double percentDipole; // percentage of decay that is pure dipole
-        G4double d, q;          // normalized pdf
+        G4double d, q, f;       // normalized pdf
         for (G4int ptn = 0; ptn < npti; ptn++)
         {
             // Sample energy range

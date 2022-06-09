@@ -90,6 +90,8 @@ public:
 
   inline void SetVerboseLevel(G4int verbose);
 
+  inline void SetMultipoleMixingRatio(G4float ratio);
+
   inline G4int GetVacantShellNumber() const;
 
 private:
@@ -155,7 +157,7 @@ inline void G4TwoPhotonEvaporation::SetVerboseLevel(G4int verbose)
 }
 
 inline void
-G4TwoPhotonEvaporation::SetMulitpoleMixingRatio(G4float &multipoleMixing)
+G4TwoPhotonEvaporation::SetMultipoleMixingRatio(G4float multipoleMixing)
 {
   fMultipoleMixing = multipoleMixing;
 }
