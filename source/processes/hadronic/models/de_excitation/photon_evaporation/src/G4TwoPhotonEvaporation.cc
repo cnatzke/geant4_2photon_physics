@@ -583,8 +583,9 @@ void G4TwoPhotonEvaporation::SetUpEnergySpectrumSampler(G4double transitionEnerg
         G4int npti = 100;
         G4double *pdf = new G4double[npti];
 
-        G4double e;    // energy of one photon
-        G4double d, q; // normalized pdf
+        G4double e;             // energy of one photon
+        G4double percentDipole; // percentage of decay that is pure dipole
+        G4double d, q;          // normalized pdf
         for (G4int ptn = 0; ptn < npti; ptn++)
         {
             // Sample energy range
@@ -598,11 +599,11 @@ void G4TwoPhotonEvaporation::SetUpEnergySpectrumSampler(G4double transitionEnerg
             // Normalized pdf for pure quadrupole transition
             q = 2772 * std::pow(e, 5) * pow((transitionEnergy - e), 5) / std::pow(transitionEnergy, 11);
 
-            // TODO implement mixing ratio
             // mixing ratio
-            f =
+            percentDipole = 1. / (1 + std::pow(fMultipoleMixing, 2));
+            f = percentDipole * d * (1 - percentDipole) * q;
 
-                pdf[ptn] = f;
+            pdf[ptn] = f;
         }
         energySpectrumSampler = new G4RandGeneral(pdf, npti);
         delete[] pdf;
