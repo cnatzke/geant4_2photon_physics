@@ -601,7 +601,7 @@ void G4TwoPhotonEvaporation::SetUpEnergySpectrumSampler(G4double transitionEnerg
 
             // mixing ratio
             percentDipole = 1. / (1 + std::pow(fMultipoleMixing, 2));
-            f = percentDipole * d * (1 - percentDipole) * q;
+            f = percentDipole * d + (1 - percentDipole) * q;
 
             pdf[ptn] = f;
         }

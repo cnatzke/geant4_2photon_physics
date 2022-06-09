@@ -57,7 +57,6 @@ G4TwoPhotonDecay::G4TwoPhotonDecay(const G4ParticleDefinition *theParentNucleus,
                                    const G4double &excitationE, G4TwoPhotonEvaporation *aPhotoEvap, const G4String &dataFile)
     : G4NuclearDecay("Two-photon decay", TwoPhoton, excitationE, noFloat), transitionQ(Qvalue), twoPhotonEvaporation(aPhotoEvap)
 {
-    fVerbose = 1;
 
     SetParent(theParentNucleus); // Store name of parent nucleus, delete G4MT_parent
     SetBR(branch);
@@ -94,7 +93,6 @@ G4DecayProducts *G4TwoPhotonDecay::DecayIt(G4double)
     G4Fragment parentNucleus(parentA, parentZ, atRest);
 
     // twoPhotonEvaporation->SetVerboseLevel(2);
-    // set the mixing ratio
     twoPhotonEvaporation->SetMultipoleMixingRatio(multipoleMixing);
     G4FragmentVector *emittedGammas = twoPhotonEvaporation->EmittedFragments(&parentNucleus);
 
@@ -155,12 +153,26 @@ void G4TwoPhotonDecay::ReadInTwoPhotonParameters(G4int Z, G4int A, const G4Strin
     // file is open
     else
     {
+
+        G4String line;
         // read in header line
-        infile >> levelIndex >> energy >> multipoleMixing;
-        while (!infile.eof())
+        std::getline(infile, line);
+        // read in data lines
+        while (std::getline(infile, line))
         {
-            infile >> levelIndex >> energy >> multipoleMixing;
+            std::istringstream sstr(line);
+
+            sstr >> levelIndex >> energy >> multipoleMixing;
+
+            if (fVerbose > 1)
+            {
+                G4cout << "levelIndex " << levelIndex
+                       << " | energy " << energy
+                       << " | multipoleMixing " << multipoleMixing
+                       << G4endl;
+            }
         }
+
         if (fVerbose > 1)
         {
             G4cout << "G4TwoPhotonDecay: open file for Z= "
