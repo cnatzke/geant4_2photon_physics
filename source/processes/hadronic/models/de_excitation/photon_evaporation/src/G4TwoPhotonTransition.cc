@@ -57,7 +57,8 @@ G4TwoPhotonTransition::~G4TwoPhotonTransition()
 G4Fragment *
 G4TwoPhotonTransition::SampleTransition(G4Fragment *nucleus,
                                         G4double newExcEnergy,
-                                        G4double multipoleRatio)
+                                        G4double multipoleRatio,
+                                        G4double angularRatio)
 {
   G4Fragment *resultGamma1 = nullptr;
   G4Fragment *resultGamma2 = nullptr;
@@ -87,7 +88,7 @@ G4TwoPhotonTransition::SampleTransition(G4Fragment *nucleus,
   {
     if (fVerbose > 2)
     {
-      G4cout << "###### Initializing energy spectrum sampler ######" << G4endl;
+      G4cout << "## Initializing energy spectrum sampler ##" << G4endl;
     }
 
     SetUpEnergySpectrumSampler(totalTransEnergy, multipoleRatio);
@@ -116,8 +117,12 @@ G4TwoPhotonTransition::SampleTransition(G4Fragment *nucleus,
   {
     if (fVerbose > 2)
     {
-      G4cout << "###### Initializing angular distribution sampler ######" << G4endl;
+      G4cout << "## Initializing angular distribution sampler ##" << G4endl;
     }
+    // angular ratio = alpha / chi
+    // * there's probably a better way to do this but for now this works
+    G4double alphaE1 = angularRatio;
+    G4double chi = 1.0;
 
     SetUpAngularDistributionSampler(alphaE1, chi);
   }
@@ -292,8 +297,8 @@ void G4TwoPhotonTransition::SetUpAngularDistributionSampler(G4float alphaE1, G4f
     // Build numberical pdf
     // Normalized pdf for pure dipole transition
     // J. Kramp, D. Habs, R. Kroth, M. Music, J. Schirmer, D. Schwalm, and C. Broude, Nuclear Two-Photon Decay in 0+→0+ Transitions, Nuclear Physics, Section A 474, 412 (1987).
-    d = 1 + coeff * std::cos(theta) + std::pow(std::cos(theta), 2);
-    f = norm * d;
+    w = 1 + coeff * std::cos(theta) + std::pow(std::cos(theta), 2);
+    f = norm * w;
 
     pdf[ptn] = f;
   }

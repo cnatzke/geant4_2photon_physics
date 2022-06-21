@@ -56,7 +56,8 @@ public:
 
   virtual G4Fragment *SampleTransition(G4Fragment *nucleus,
                                        G4double newExcEnergy,
-                                       G4double multipoleRatio);
+                                       G4double multipoleRatio,
+                                       G4double angularRatio);
 
   virtual void SampleDirection(G4Fragment *nuc, G4double ratio,
                                G4int twoJ1, G4int twoJ2, G4int mp);

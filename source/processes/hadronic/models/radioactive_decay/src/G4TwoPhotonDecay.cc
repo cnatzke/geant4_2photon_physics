@@ -92,8 +92,9 @@ G4DecayProducts *G4TwoPhotonDecay::DecayIt(G4double)
     // Let G4TwoPhotonEvaporation do the decay
     G4Fragment parentNucleus(parentA, parentZ, atRest);
 
-    // twoPhotonEvaporation->SetVerboseLevel(2);
+    twoPhotonEvaporation->SetVerboseLevel(2);
     twoPhotonEvaporation->SetMultipoleMixingRatio(multipoleMixing);
+    twoPhotonEvaporation->SetAngularRatio(angularRatio);
     G4FragmentVector *emittedGammas = twoPhotonEvaporation->EmittedFragments(&parentNucleus);
 
     // Modified nuclide is returned as dynDaughter
@@ -162,13 +163,14 @@ void G4TwoPhotonDecay::ReadInTwoPhotonParameters(G4int Z, G4int A, const G4Strin
         {
             std::istringstream sstr(line);
 
-            sstr >> levelIndex >> energy >> multipoleMixing;
+            sstr >> levelIndex >> energy >> multipoleMixing >> angularRatio;
 
             if (fVerbose > 1)
             {
                 G4cout << "levelIndex " << levelIndex
                        << " | energy " << energy
                        << " | multipoleMixing " << multipoleMixing
+                       << " | angularRatio " << angularRatio
                        << G4endl;
             }
         }

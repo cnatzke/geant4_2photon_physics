@@ -93,6 +93,8 @@ public:
 
   inline void SetMultipoleMixingRatio(G4float ratio);
 
+  inline void SetAngularRatio(G4float angularRatio);
+
   inline G4int GetVacantShellNumber() const;
 
 private:
@@ -140,6 +142,7 @@ private:
   G4double Tolerance;
 
   G4float fMultipoleMixing;
+  G4float fAngularRatio;
 
   G4bool fRDM;
   G4bool fSampleTime;
@@ -162,6 +165,12 @@ inline void
 G4TwoPhotonEvaporation::SetMultipoleMixingRatio(G4float multipoleMixing)
 {
   fMultipoleMixing = multipoleMixing;
+}
+
+inline void
+G4TwoPhotonEvaporation::SetAngularRatio(G4float angularRatio)
+{
+  fAngularRatio = angularRatio;
 }
 
 inline void

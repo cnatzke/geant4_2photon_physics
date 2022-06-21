@@ -70,6 +70,7 @@ private:
     G4int levelIndex;
 
     G4float multipoleMixing;
+    G4float angularRatio;
 
     G4double energy;
 };
