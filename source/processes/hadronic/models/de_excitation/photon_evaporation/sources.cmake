@@ -20,6 +20,7 @@
 GEANT4_DEFINE_MODULE(NAME G4hadronic_deex_photon_evaporation
     HEADERS
         G4GammaTransition.hh
+        G4TwoPhotonTransition.hh
         G4NeutronRadCapture.hh
         G4PhotonEvaporation.hh
         G4TwoPhotonEvaporation.hh
@@ -27,6 +28,7 @@ GEANT4_DEFINE_MODULE(NAME G4hadronic_deex_photon_evaporation
         G4VGammaTransition.hh
     SOURCES
         G4GammaTransition.cc
+        G4TwoPhotonTransition.cc
         G4NeutronRadCapture.cc
         G4PhotonEvaporation.cc
         G4TwoPhotonEvaporation.cc

@@ -54,6 +54,7 @@
 // const G4int MAXGRDATA  = 300;
 
 class G4GammaTransition;
+class G4TwoPhotonTransition;
 class G4NuclearPolarizationStore;
 
 class G4TwoPhotonEvaporation : public G4VEvaporationChannel
@@ -109,6 +110,7 @@ private:
   G4NuclearLevelData *fNuclearLevelData;
   const G4LevelManager *fLevelManager;
   G4GammaTransition *fTransition;
+  G4TwoPhotonTransition *fTestTransition;
   G4NuclearPolarizationStore *fNucPStore;
 
   // fPolarization stores polarization tensor for consecutive

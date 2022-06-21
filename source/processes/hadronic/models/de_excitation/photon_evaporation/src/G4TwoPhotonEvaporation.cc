@@ -46,6 +46,7 @@
 #include "G4LorentzVector.hh"
 #include "G4FragmentVector.hh"
 #include "G4GammaTransition.hh"
+#include "G4TwoPhotonTransition.hh"
 #include "G4Pow.hh"
 #include <CLHEP/Units/SystemOfUnits.h>
 #include <CLHEP/Units/PhysicalConstants.h>
@@ -72,6 +73,11 @@ G4TwoPhotonEvaporation::G4TwoPhotonEvaporation(G4GammaTransition *p)
     if (!fTransition)
     {
         fTransition = new G4GammaTransition();
+    }
+
+    if (!fTestTransition)
+    {
+        fTestTransition = new G4TwoPhotonTransition();
     }
 
     theA = theZ = fCode = 0;
@@ -373,6 +379,7 @@ G4TwoPhotonEvaporation::GenerateGammas(G4Fragment *nucleus)
     G4FragmentVector *products = new G4FragmentVector();
     G4Fragment *gamma1 = nullptr;
     G4Fragment *gamma2 = nullptr;
+    G4Fragment *gammaTest = nullptr;
 
     if (!isInitialised)
     {
@@ -525,6 +532,9 @@ G4TwoPhotonEvaporation::GenerateGammas(G4Fragment *nucleus)
         gamma2 = fTransition->SampleTransition(nucleus, efinal, ratio, JP1,
                                                JP2, multiP, vShellNumber,
                                                isDiscrete, isGamma);
+
+        fTestTransition->SetVerbose(3);
+        gammaTest = fTestTransition->SampleTransition(nucleus, efinal, ratio);
 
         if (gamma1)
         {

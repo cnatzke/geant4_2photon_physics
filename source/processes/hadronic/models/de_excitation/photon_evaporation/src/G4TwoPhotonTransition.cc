@@ -57,7 +57,6 @@ G4TwoPhotonTransition::~G4TwoPhotonTransition()
 G4Fragment *
 G4TwoPhotonTransition::SampleTransition(G4Fragment *nucleus,
                                         G4double newExcEnergy,
-                                        G4double gamma1Energy,
                                         G4double multipoleRatio)
 {
   G4Fragment *resultGamma1 = nullptr;
@@ -72,28 +71,44 @@ G4TwoPhotonTransition::SampleTransition(G4Fragment *nucleus,
   }
   if (totalTransEnergy <= 0.0)
   {
-    G4Exception("G4TwoPhotonTransition::SampleTransition()", "HAD_TWOPHOTON_000", FatalException, "Total transition energy is less than 0.0")
+    G4Exception("G4TwoPhotonTransition::SampleTransition()", "HAD_TWOPHOTON_000", FatalException, "Total transition energy is less than 0.0");
   }
 
   // Do complete Lorentz computation
   G4LorentzVector lv = nucleus->GetMomentum();
   G4double mass = nucleus->GetGroundStateMass() + newExcEnergy;
 
-  // select secondary
-  G4ParticleDefinition *part;
+  // select secondaries
+  G4ParticleDefinition *gamma1 = G4Gamma::Gamma();
+  G4ParticleDefinition *gamma2 = G4Gamma::Gamma();
 
-  if (isGamma)
+  if (!energySpectrumSampler)
   {
-    part = G4Gamma::Gamma();
+    SetUpEnergySpectrumSampler(totalTransEnergy, multipoleRatio);
+  }
+
+  if (energySpectrumSampler)
+  {
+    G4double eGamma1 = totalTransEnergy * energySpectrumSampler->shoot(G4Random::getTheEngine());
+    G4double eGamma2 = totalTransEnergy - eGamma1; // keV
+
+    if (fVerbose > 2)
+    {
+      G4cout << "G4TwoPhotonTransition::eGamma1" << eGamma1
+             << "G4TwoPhotonTransition::eGamma2" << eGamma2
+             << G4endl;
+    }
   }
   else
   {
-    part = G4Electron::Electron();
-    G4int ne = std::max(nucleus->GetNumberOfElectrons() - 1, 0);
-    nucleus->SetNumberOfElectrons(ne);
+    G4Exception("G4TwoPhotonTransition::SampleTransition()", "HAD_TWOPHOTON_001", FatalException, "No initialized energy spectrum sampler");
   }
 
-  if (polarFlag && isDiscrete)
+  energySpectrumSampler = NULL;
+
+  return resultGamma1;
+  /*
+  if (polarFlag)
   {
     SampleDirection(nucleus, mpRatio, JP1, JP2, MP);
   }
@@ -145,6 +160,7 @@ G4TwoPhotonTransition::SampleTransition(G4Fragment *nucleus,
     G4cout << "       Left nucleus: " << *nucleus << G4endl;
   }
   return result;
+  */
 }
 
 void G4TwoPhotonTransition::SampleDirection(G4Fragment *nuc, G4double ratio,
@@ -199,5 +215,40 @@ void G4TwoPhotonTransition::SampleDirection(G4Fragment *nuc, G4double ratio,
     {
       G4cout << *np << G4endl;
     }
+  }
+}
+
+void G4TwoPhotonTransition::SetUpEnergySpectrumSampler(G4double transitionEnergy, G4float multipoleRatio)
+{
+  if (transitionEnergy > 0)
+  {
+    // Array to store spectrum pdf
+    G4int npti = 100;
+    G4double *pdf = new G4double[npti];
+
+    G4double e;             // energy of one photon
+    G4double percentDipole; // percentage of decay that is pure dipole
+    G4double d, q, f;       // normalized pdf
+    for (G4int ptn = 0; ptn < npti; ptn++)
+    {
+      // Sample energy range
+      e = transitionEnergy * G4double(ptn) / G4double(npti);
+
+      // Build numberical pdf
+
+      // Normalized pdf for pure dipole transition
+      d = 140 * std::pow(e, 3) * pow((transitionEnergy - e), 3) / std::pow(transitionEnergy, 7);
+
+      // Normalized pdf for pure quadrupole transition
+      q = 2772 * std::pow(e, 5) * pow((transitionEnergy - e), 5) / std::pow(transitionEnergy, 11);
+
+      // mixing ratio
+      percentDipole = 1. / (1 + std::pow(multipoleRatio, 2));
+      f = percentDipole * d + (1 - percentDipole) * q;
+
+      pdf[ptn] = f;
+    }
+    energySpectrumSampler = new G4RandGeneral(pdf, npti);
+    delete[] pdf;
   }
 }

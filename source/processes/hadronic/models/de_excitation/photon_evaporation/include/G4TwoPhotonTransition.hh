@@ -45,6 +45,7 @@
 #include "globals.hh"
 #include "G4Fragment.hh"
 #include "G4PolarizationTransition.hh"
+#include "Randomize.hh"
 
 class G4TwoPhotonTransition
 {
@@ -55,13 +56,7 @@ public:
 
   virtual G4Fragment *SampleTransition(G4Fragment *nucleus,
                                        G4double newExcEnergy,
-                                       G4double mpRatio,
-                                       G4int JP1,
-                                       G4int JP2,
-                                       G4int MP,
-                                       G4int shell,
-                                       G4bool isDiscrete,
-                                       G4bool isGamma);
+                                       G4double multipoleRatio);
 
   virtual void SampleDirection(G4Fragment *nuc, G4double ratio,
                                G4int twoJ1, G4int twoJ2, G4int mp);
@@ -75,12 +70,15 @@ public:
   };
 
 private:
+  void SetUpEnergySpectrumSampler(G4double transitionEnergy, G4float multipoleRatio);
+
   G4TwoPhotonTransition(const G4TwoPhotonTransition &right) = delete;
   const G4TwoPhotonTransition &operator=(const G4TwoPhotonTransition &right) = delete;
   G4bool operator==(const G4TwoPhotonTransition &right) const = delete;
   G4bool operator!=(const G4TwoPhotonTransition &right) const = delete;
 
   G4bool polarFlag;
+  G4RandGeneral *energySpectrumSampler;
 
 protected:
   G4ThreeVector fDirection;
