@@ -82,8 +82,14 @@ G4TwoPhotonTransition::SampleTransition(G4Fragment *nucleus,
   G4ParticleDefinition *gamma1 = G4Gamma::Gamma();
   G4ParticleDefinition *gamma2 = G4Gamma::Gamma();
 
+  // find continuous energy distribution of photons
   if (!energySpectrumSampler)
   {
+    if (fVerbose > 2)
+    {
+      G4cout << "###### Initializing energy spectrum sampler ######" << G4endl;
+    }
+
     SetUpEnergySpectrumSampler(totalTransEnergy, multipoleRatio);
   }
 
@@ -94,8 +100,9 @@ G4TwoPhotonTransition::SampleTransition(G4Fragment *nucleus,
 
     if (fVerbose > 2)
     {
-      G4cout << "G4TwoPhotonTransition::eGamma1" << eGamma1
-             << "G4TwoPhotonTransition::eGamma2" << eGamma2
+      G4cout << "G4TwoPhotonTransition::eGamma1 " << eGamma1 << " | "
+             << "G4TwoPhotonTransition::eGamma2 " << eGamma2 << " | "
+             << "G4TwoPhotonTransition::totalTransEnergy " << eGamma1 + eGamma2
              << G4endl;
     }
   }
@@ -104,7 +111,19 @@ G4TwoPhotonTransition::SampleTransition(G4Fragment *nucleus,
     G4Exception("G4TwoPhotonTransition::SampleTransition()", "HAD_TWOPHOTON_001", FatalException, "No initialized energy spectrum sampler");
   }
 
+  // finding angular distribution of photons
+  if (!angularDistributionSampler)
+  {
+    if (fVerbose > 2)
+    {
+      G4cout << "###### Initializing angular distribution sampler ######" << G4endl;
+    }
+
+    SetUpAngularDistributionSampler(alphaE1, chi);
+  }
+
   energySpectrumSampler = NULL;
+  angularDistributionSampler = NULL;
 
   return resultGamma1;
   /*
@@ -251,4 +270,33 @@ void G4TwoPhotonTransition::SetUpEnergySpectrumSampler(G4double transitionEnergy
     energySpectrumSampler = new G4RandGeneral(pdf, npti);
     delete[] pdf;
   }
+}
+
+void G4TwoPhotonTransition::SetUpAngularDistributionSampler(G4float alphaE1, G4float chi)
+{
+  // Array to store spectrum pdf
+  G4int npti = 100;
+  G4double *pdf = new G4double[npti];
+
+  G4double theta; // angle between photons
+  G4double w, f;  // angular distribution function
+
+  G4double norm = 2 / (3 * CLHEP::pi);                                            // normalizing factor
+  G4double coeff = 4 * alphaE1 * chi / (std::pow(alphaE1, 2) + std::pow(chi, 2)); // interference term coefficient
+
+  for (G4int ptn = 0; ptn < npti; ptn++)
+  {
+    // Sample angular range
+    theta = CLHEP::pi * G4double(ptn) / G4double(npti);
+
+    // Build numberical pdf
+    // Normalized pdf for pure dipole transition
+    // J. Kramp, D. Habs, R. Kroth, M. Music, J. Schirmer, D. Schwalm, and C. Broude, Nuclear Two-Photon Decay in 0+→0+ Transitions, Nuclear Physics, Section A 474, 412 (1987).
+    d = 1 + coeff * std::cos(theta) + std::pow(std::cos(theta), 2);
+    f = norm * d;
+
+    pdf[ptn] = f;
+  }
+  angularDistributionSampler = new G4RandGeneral(pdf, npti);
+  delete[] pdf;
 }

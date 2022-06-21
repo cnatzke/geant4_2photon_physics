@@ -62,7 +62,7 @@ G4TwoPhotonEvaporation::G4TwoPhotonEvaporation(G4GammaTransition *p)
     : fLevelManager(nullptr), fTransition(p), fPolarization(nullptr),
       fVerbose(1), fPoints(0), vShellNumber(-1), fIndex(0),
       fMaxLifeTime(DBL_MAX), fRDM(false), fSampleTime(true),
-      fCorrelatedGamma(false), isInitialised(false)
+      fCorrelatedGamma(false), isInitialised(false), fTestTransition(nullptr)
 {
     // G4cout << "### New G4TwoPhotonEvaporation() " << this << G4endl;
     fNuclearLevelData = G4NuclearLevelData::GetInstance();
@@ -508,6 +508,10 @@ G4TwoPhotonEvaporation::GenerateGammas(G4Fragment *nucleus)
         return products;
     }
 
+    // * CRN new style here
+    fTestTransition->SetVerbose(3);
+    gammaTest = fTestTransition->SampleTransition(nucleus, efinal, ratio);
+
     G4double eTransTotal = std::abs(efinal - eexc);
     if (!energySpectrumSampler)
     {
@@ -532,9 +536,6 @@ G4TwoPhotonEvaporation::GenerateGammas(G4Fragment *nucleus)
         gamma2 = fTransition->SampleTransition(nucleus, efinal, ratio, JP1,
                                                JP2, multiP, vShellNumber,
                                                isDiscrete, isGamma);
-
-        fTestTransition->SetVerbose(3);
-        gammaTest = fTestTransition->SampleTransition(nucleus, efinal, ratio);
 
         if (gamma1)
         {
