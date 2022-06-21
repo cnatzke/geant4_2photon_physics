@@ -91,7 +91,7 @@ public:
 
   inline void SetVerboseLevel(G4int verbose);
 
-  inline void SetMultipoleMixingRatio(G4float ratio);
+  inline void SetMultipoleMixingRatio(G4float multipoleMixing);
 
   inline void SetAngularRatio(G4float angularRatio);
 

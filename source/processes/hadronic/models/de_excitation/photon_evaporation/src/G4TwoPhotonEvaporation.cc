@@ -62,25 +62,24 @@ G4TwoPhotonEvaporation::G4TwoPhotonEvaporation(G4GammaTransition *p)
     : fLevelManager(nullptr), fTransition(p), fPolarization(nullptr),
       fVerbose(1), fPoints(0), vShellNumber(-1), fIndex(0),
       fMaxLifeTime(DBL_MAX), fRDM(false), fSampleTime(true),
-      fCorrelatedGamma(false), isInitialised(false), fTestTransition(nullptr)
+      fCorrelatedGamma(false), isInitialised(false)
 {
     // G4cout << "### New G4TwoPhotonEvaporation() " << this << G4endl;
     fNuclearLevelData = G4NuclearLevelData::GetInstance();
     fNucPStore = G4NuclearPolarizationStore::GetInstance();
     LevelDensity = 0.125 / CLHEP::MeV;
     Tolerance = 20 * CLHEP::eV;
+    fTestTransition = NULL;
 
     if (!fTransition)
     {
         fTransition = new G4GammaTransition();
     }
 
-    /*
     if (!fTestTransition)
     {
         fTestTransition = new G4TwoPhotonTransition();
     }
-    */
 
     theA = theZ = fCode = 0;
     fLevelEnergyMax = fStep = fExcEnergy = fProbability = 0.0;
@@ -511,10 +510,11 @@ G4TwoPhotonEvaporation::GenerateGammas(G4Fragment *nucleus)
     }
 
     // * CRN new style here
-    // fTestTransition->SetVerbose(3);
-    // gammaTest = fTestTransition->SampleTransition(nucleus, efinal, fMultipoleMixing, fAngularRatio);
+    fTestTransition->SetVerbose(3);
+    gammaTest = fTestTransition->SampleTransition(nucleus, efinal, fMultipoleMixing, fAngularRatio);
 
     G4double eTransTotal = std::abs(efinal - eexc);
+
     if (!energySpectrumSampler)
     {
         SetUpEnergySpectrumSampler(eTransTotal);
@@ -523,6 +523,7 @@ G4TwoPhotonEvaporation::GenerateGammas(G4Fragment *nucleus)
     if (energySpectrumSampler)
     {
 
+        SetUpEnergySpectrumSampler(eTransTotal);
         // Sample energy from known energy distribution
         G4double eGamma1 = eTransTotal * energySpectrumSampler->shoot(G4Random::getTheEngine());
         // G4cout << "--> Sampled gamma energy: " << eGamma1 / CLHEP::keV << " keV" << G4endl;
