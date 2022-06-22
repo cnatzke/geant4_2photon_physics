@@ -60,6 +60,8 @@ G4TwoPhotonTransition::SampleTransition(G4Fragment *nucleus,
                                         G4double multipoleRatio,
                                         G4double angularRatio)
 {
+  fMultipoleRatio = multipoleRatio;
+  fAngularRatio = angularRatio;
   G4Fragment *resultGamma1 = nullptr;
 
   G4double totalTransEnergy = nucleus->GetExcitationEnergy() - newExcEnergy;
@@ -82,68 +84,11 @@ G4TwoPhotonTransition::SampleTransition(G4Fragment *nucleus,
   G4ParticleDefinition *gamma1 = G4Gamma::Gamma();
   G4ParticleDefinition *gamma2 = G4Gamma::Gamma();
 
-  // find continuous energy distribution of photons
-  if (!energySpectrumSampler)
-  {
-    if (fVerbose > 2)
-    {
-      G4cout << "## Initializing energy spectrum sampler ##" << G4endl;
-    }
+  SampleEnergy(totalTransEnergy);
 
-    SetUpEnergySpectrumSampler(totalTransEnergy, multipoleRatio);
-  }
-
-  if (energySpectrumSampler)
-  {
-    G4double eGamma1 = totalTransEnergy * energySpectrumSampler->shoot(G4Random::getTheEngine());
-    G4double eGamma2 = totalTransEnergy - eGamma1; // keV
-
-    if (fVerbose > 2)
-    {
-      G4cout << "G4TwoPhotonTransition::eGamma1 " << eGamma1 << " | "
-             << "G4TwoPhotonTransition::eGamma2 " << eGamma2 << " | "
-             << "G4TwoPhotonTransition::totalTransEnergy " << eGamma1 + eGamma2
-             << G4endl;
-    }
-  }
-  else
-  {
-    G4Exception("G4TwoPhotonTransition::SampleTransition()", "HAD_TWOPHOTON_001", FatalException, "No initialized energy spectrum sampler");
-  }
-
-  // finding angular distribution of photons
-  if (!angularDistributionSampler)
-  {
-    if (fVerbose > 2)
-    {
-      G4cout << "## Initializing angular distribution sampler ##" << G4endl;
-    }
-    // angular ratio = alpha / chi
-    // * there's probably a better way to do this but for now this works
-    G4double alphaE1 = angularRatio;
-    G4double chi = 1.0;
-
-    SetUpAngularDistributionSampler(alphaE1, chi);
-  }
-
-  if (angularDistributionSampler)
-  {
-    G4double theta = CLHEP::pi * angularDistributionSampler->shoot(G4Random::getTheEngine());
-
-    if (fVerbose > 2)
-    {
-      G4cout << "###### G4TwoPhotonTransition::angularRatio " << angularRatio << " | "
-             << "G4TwoPhotonTransition::theta " << theta
-             << G4endl;
-    }
-  }
-  else
-  {
-    G4Exception("G4TwoPhotonTransition::SampleTransition()", "HAD_TWOPHOTON_002", FatalException, "No initialized angular distribution sampler");
-  }
+  SampleDirection();
 
   energySpectrumSampler = NULL;
-  angularDistributionSampler = NULL;
 
   return resultGamma1;
   /*
@@ -202,59 +147,75 @@ G4TwoPhotonTransition::SampleTransition(G4Fragment *nucleus,
   */
 }
 
-void G4TwoPhotonTransition::SampleDirection(G4Fragment *nuc, G4double ratio,
-                                            G4int twoJ1, G4int twoJ2, G4int mp)
+void G4TwoPhotonTransition::SampleEnergy(G4double totalTransEnergy)
 {
-  G4double cosTheta, phi;
-  G4NuclearPolarization *np = nuc->GetNuclearPolarization();
-  if (fVerbose > 2)
+  // find continuous energy distribution of photons
+  if (!energySpectrumSampler)
   {
-    G4cout << "G4TwoPhotonTransition::SampleDirection : 2J1= " << twoJ1
-           << " 2J2= " << twoJ2 << " ratio= " << ratio
-           << " mp= " << mp << G4endl;
-    G4cout << "  Nucleus: " << *nuc << G4endl;
+    if (fVerbose > 2)
+    {
+      G4cout << "## Initializing energy spectrum sampler ##" << G4endl;
+    }
+
+    SetUpEnergySpectrumSampler(totalTransEnergy, fMultipoleRatio);
   }
-  if (nullptr == np)
+
+  if (energySpectrumSampler)
   {
-    cosTheta = 2 * G4UniformRand() - 1.0;
-    phi = CLHEP::twopi * G4UniformRand();
+    G4double eGamma1 = totalTransEnergy * energySpectrumSampler->shoot(G4Random::getTheEngine());
+    G4double eGamma2 = totalTransEnergy - eGamma1; // keV
+
+    if (fVerbose > 2)
+    {
+      G4cout << "G4TwoPhotonTransition::eGamma1 " << eGamma1 << " | "
+             << "G4TwoPhotonTransition::eGamma2 " << eGamma2 << " | "
+             << "G4TwoPhotonTransition::totalTransEnergy " << eGamma1 + eGamma2
+             << G4endl;
+    }
   }
   else
   {
-    // PhotonEvaporation dataset:
-    // The multipolarity number with 1,2,3,4,5,6,7 representing E0,E1,M1,E2,M2,E3,M3
-    // monopole transition and 100*Nx+Ny representing multipolarity transition with
-    // Ny and Ny taking the value 1,2,3,4,5,6,7 referring to E0,E1,M1,E2,M2,E3,M3,..
-    // For example a M1+E2 transition would be written 304.
-    // M1 is the primary transition (L) and E2 is the secondary (L')
-
-    G4double mpRatio = ratio;
-
-    G4int L0 = 0, Lp = 0;
-    if (mp > 99)
-    {
-      L0 = mp / 200;
-      Lp = (mp % 100) / 2;
-    }
-    else
-    {
-      L0 = mp / 2;
-      Lp = 0;
-      mpRatio = 0.;
-    }
-    fPolTrans.SampleGammaTransition(np, twoJ1, twoJ2, L0, Lp, mpRatio, cosTheta, phi);
+    G4Exception("G4TwoPhotonTransition::SampleTransition()", "HAD_TWOPHOTON_001", FatalException, "No initialized energy spectrum sampler");
   }
 
-  G4double sinTheta = std::sqrt((1. - cosTheta) * (1. + cosTheta));
-  fDirection.set(sinTheta * std::cos(phi), sinTheta * std::sin(phi), cosTheta);
-  if (fVerbose > 3)
+  energySpectrumSampler = NULL;
+}
+
+void G4TwoPhotonTransition::SampleDirection()
+{
+
+  // finding angular distribution of photons
+  if (!angularDistributionSampler)
   {
-    G4cout << "G4TwoPhotonTransition::SampleDirection done: " << fDirection << G4endl;
-    if (np)
+    if (fVerbose > 2)
     {
-      G4cout << *np << G4endl;
+      G4cout << "## Initializing angular distribution sampler ##" << G4endl;
+    }
+    // angular ratio = alpha / chi
+    // * there's probably a better way to do this but for now this works
+    G4double alphaE1 = fAngularRatio;
+    G4double chi = 1.0;
+
+    SetUpAngularDistributionSampler(alphaE1, chi);
+  }
+
+  if (angularDistributionSampler)
+  {
+    G4double theta = CLHEP::pi * angularDistributionSampler->shoot(G4Random::getTheEngine());
+
+    if (fVerbose > 2)
+    {
+      G4cout << "###### G4TwoPhotonTransition::angularRatio " << fAngularRatio << " | "
+             << "G4TwoPhotonTransition::theta " << theta
+             << G4endl;
     }
   }
+  else
+  {
+    G4Exception("G4TwoPhotonTransition::SampleTransition()", "HAD_TWOPHOTON_002", FatalException, "No initialized angular distribution sampler");
+  }
+
+  angularDistributionSampler = NULL;
 }
 
 void G4TwoPhotonTransition::SetUpEnergySpectrumSampler(G4double transitionEnergy, G4float multipoleRatio)

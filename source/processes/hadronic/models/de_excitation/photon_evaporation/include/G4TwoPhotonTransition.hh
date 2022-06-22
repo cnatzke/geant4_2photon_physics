@@ -59,8 +59,9 @@ public:
                                        G4double multipoleRatio,
                                        G4double angularRatio);
 
-  virtual void SampleDirection(G4Fragment *nuc, G4double ratio,
-                               G4int twoJ1, G4int twoJ2, G4int mp);
+  virtual void SampleEnergy(G4double totalTransEnergy);
+
+  virtual void SampleDirection();
 
   inline void SetPolarizationFlag(G4bool val) { polarFlag = val; };
 
@@ -87,6 +88,7 @@ protected:
   G4ThreeVector fDirection;
   G4PolarizationTransition fPolTrans;
   G4int fVerbose;
+  G4double fMultipoleRatio, fAngularRatio;
 };
 
 #endif
