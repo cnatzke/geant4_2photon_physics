@@ -301,18 +301,18 @@ void G4TwoPhotonTransition::SetUpAngularDistributionSampler(G4float alphaE1, G4f
   G4double theta; // angle between photons
   G4double w, f;  // angular distribution function
 
-  G4double norm = -8 / 3.;                                                        // normalizing factor
+  G4double norm = 2 / (3 * CLHEP::pi);                                            // normalizing factor
   G4double coeff = 4 * alphaE1 * chi / (std::pow(alphaE1, 2) + std::pow(chi, 2)); // interference term coefficient
 
   for (G4int ptn = 0; ptn <= npti; ptn++)
   {
     // Sample angular range
-    cos_theta = 2.0 * (G4double(ptn) + 0.5) / G4double(npti) - 1.0;
+    theta = CLHEP::pi * (G4double(ptn) + 0.5) / G4double(npti);
 
     // Build numberical pdf
-    // Normalized pdf for pure dipole transition
+    // Normalized pdf for angle between photons
     // J. Kramp, D. Habs, R. Kroth, M. Music, J. Schirmer, D. Schwalm, and C. Broude, Nuclear Two-Photon Decay in 0+→0+ Transitions, Nuclear Physics, Section A 474, 412 (1987).
-    w = 1 + coeff * cos_theta + std::pow(cos_theta, 2);
+    w = 1 + coeff * std::cos(theta) + std::pow(std::cos(theta), 2);
     f = norm * w;
 
     pdf[ptn] = f;
