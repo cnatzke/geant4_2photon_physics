@@ -150,18 +150,16 @@ G4TwoPhotonTransition::SampleTransition(G4Fragment *nucleus,
 void G4TwoPhotonTransition::SampleEnergy(G4double totalTransEnergy)
 {
   // find continuous energy distribution of photons
-  if (!energySpectrumSampler)
+  if (fVerbose > 2)
   {
-    if (fVerbose > 2)
-    {
-      G4cout << "## Initializing energy spectrum sampler ##" << G4endl;
-    }
-
-    SetUpEnergySpectrumSampler(totalTransEnergy, fMultipoleRatio);
+    G4cout << "## Initializing energy spectrum sampler ##" << G4endl;
   }
+
+  SetUpEnergySpectrumSampler(totalTransEnergy, fMultipoleRatio);
 
   if (energySpectrumSampler)
   {
+
     G4double eGamma1 = totalTransEnergy * energySpectrumSampler->shoot(G4Random::getTheEngine());
     G4double eGamma2 = totalTransEnergy - eGamma1; // keV
 
@@ -201,6 +199,11 @@ void G4TwoPhotonTransition::SampleDirection()
 
   if (angularDistributionSampler)
   {
+    G4ThreeVector v1 = G4ThreeVector(1., 2., 3.);
+    G4ThreeVector v2 = G4ThreeVector(0., 0., 1.);
+
+    CreateRotationMatrix(v1, v2);
+    /*
     // the first photon is emitted in a random direction and sets the axis
     G4double cosThetaFirstPhoton = 2. * G4UniformRand() - 1.0;
     G4double sinThetaFirstPhoton = std::sqrt(1.0 - cosThetaFirstPhoton * cosThetaFirstPhoton);
@@ -221,6 +224,7 @@ void G4TwoPhotonTransition::SampleDirection()
     G4double PhiFirstPhotonPhoton = twopi * G4UniformRand() * rad;
     G4double sinPhiFirstPhotonPhoton = std::sin(PhiFirstPhotonPhoton);
     G4double cosPhiFirstPhotonPhoton = std::cos(PhiFirstPhotonPhoton);
+    */
   }
   else
   {
@@ -293,3 +297,51 @@ void G4TwoPhotonTransition::SetUpAngularDistributionSampler(G4float alphaE1, G4f
   angularDistributionSampler = new G4RandGeneral(pdf, npti);
   delete[] pdf;
 }
+
+void G4TwoPhotonTransition::CreateRotationMatrix(const G4ThreeVector &vector1, const G4ThreeVector &vector2)
+{
+
+  G4int dim = 3;
+  G4ThreeVector a, b, v;
+  G4double c;
+  G4int i, j;
+  // first normalize the vectors
+  a = vector1.unit();
+  b = vector2.unit();
+
+  v = a.cross(b);
+  c = a.dot(b);
+
+  G4double d[3] = {0, 0, 0};
+  G4double iMat[3][3] = {{1., 0, 0}, {0, 1., 0}, {0, 0, 1.}};
+  G4double kMat[3][3] = {{0., -v.z(), v.y()}, {v.z(), 0., -v.x()}, {-v.y(), v.x(), 0.0}};
+
+  // matrix dot product
+  for (i = 0; i < dim; i++)
+  {
+    d[i] = 0;
+    for (j = 0; j < dim; j++)
+      d[i] += kMat[i][j] * kMat[i][j];
+  }
+
+  // building the rotation matrix
+  for (i = 0; i < 3; i++)
+  {
+    for (j = 0; j < 3; j++)
+    {
+      kMat[i][j] = kMat[i][j] + iMat[i][j] + d[i] * (1.0 - c) / std::pow(v.mag(), 2);
+    }
+  }
+
+  // Printing Matrix
+  G4cout << "\n Rotation Matrix : \n ";
+  for (i = 0; i < dim; i++)
+  {
+    for (j = 0; j < dim; j++)
+      G4cout << kMat[i][j] << " ";
+    G4cout << "\n ";
+  }
+  G4cout << "\n"
+         << G4endl;
+
+} // end FindRotationMatrix

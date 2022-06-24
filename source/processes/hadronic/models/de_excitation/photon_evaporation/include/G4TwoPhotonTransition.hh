@@ -74,6 +74,7 @@ public:
 private:
   void SetUpEnergySpectrumSampler(G4double transitionEnergy, G4float multipoleRatio);
   void SetUpAngularDistributionSampler(G4float alphaE1, G4float chi);
+  void CreateRotationMatrix(const G4ThreeVector &vector1, const G4ThreeVector &vector2);
 
   G4TwoPhotonTransition(const G4TwoPhotonTransition &right) = delete;
   const G4TwoPhotonTransition &operator=(const G4TwoPhotonTransition &right) = delete;
@@ -85,6 +86,7 @@ private:
   G4RandGeneral *angularDistributionSampler;
 
 protected:
+  G4ThreeVector fDirection;
   G4ThreeVector fDirectionFirstPhoton;
   G4ThreeVector fDirectionSecondPhoton;
   G4PolarizationTransition fPolTrans;
