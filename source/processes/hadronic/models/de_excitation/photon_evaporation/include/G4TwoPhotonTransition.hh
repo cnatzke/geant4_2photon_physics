@@ -85,7 +85,8 @@ private:
   G4RandGeneral *angularDistributionSampler;
 
 protected:
-  G4ThreeVector fDirection;
+  G4ThreeVector fDirectionFirstPhoton;
+  G4ThreeVector fDirectionSecondPhoton;
   G4PolarizationTransition fPolTrans;
   G4int fVerbose;
   G4double fMultipoleRatio, fAngularRatio;

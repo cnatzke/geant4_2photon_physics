@@ -201,14 +201,26 @@ void G4TwoPhotonTransition::SampleDirection()
 
   if (angularDistributionSampler)
   {
+    // the first photon is emitted in a random direction and sets the axis
+    G4double cosThetaFirstPhoton = 2. * G4UniformRand() - 1.0;
+    G4double sinThetaFirstPhoton = std::sqrt(1.0 - cosThetaFirstPhoton * cosThetaFirstPhoton);
+
+    G4double phiFirstPhotonPhoton = twopi * G4UniformRand() * rad;
+    G4double sinPhiFirstPhotonPhoton = std::sin(phiFirstPhotonPhoton);
+    G4double cosPhiFirstPhotonPhoton = std::cos(phiFirstPhotonPhoton);
+
+    fDirectionFirstPhoton.set(sinThetaFirstPhoton * cosPhiFirstPhotonPhoton, sinThetaFirstPhoton * sinPhiFirstPhotonPhoton, cosThetaFirstPhoton);
+
+    // sample the angle between the two photons
     G4double theta = CLHEP::pi * angularDistributionSampler->shoot(G4Random::getTheEngine());
 
-    if (fVerbose > 2)
-    {
-      G4cout << "###### G4TwoPhotonTransition::angularRatio " << fAngularRatio << " | "
-             << "G4TwoPhotonTransition::theta " << theta
-             << G4endl;
-    }
+    // the second photon is emitted randomly in theta, but must obey the angle defined by "theta" above
+    G4double cosThetaSecondPhoton = 2. * G4UniformRand() - 1.0;
+    G4double sinThetaSecondPhoton = std::sqrt(1.0 - cosThetaSecondPhoton * cosThetaSecondPhoton);
+
+    G4double PhiFirstPhotonPhoton = twopi * G4UniformRand() * rad;
+    G4double sinPhiFirstPhotonPhoton = std::sin(PhiFirstPhotonPhoton);
+    G4double cosPhiFirstPhotonPhoton = std::cos(PhiFirstPhotonPhoton);
   }
   else
   {
