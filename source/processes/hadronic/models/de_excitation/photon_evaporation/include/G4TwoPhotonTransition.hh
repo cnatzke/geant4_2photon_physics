@@ -54,10 +54,10 @@ public:
 
   virtual ~G4TwoPhotonTransition();
 
-  virtual G4Fragment *SampleTransition(G4Fragment *nucleus,
-                                       G4double newExcEnergy,
-                                       G4double multipoleRatio,
-                                       G4double angularRatio);
+  virtual std::vector<G4Fragment *> SampleTransition(G4Fragment *nucleus,
+                                                     G4double newExcEnergy,
+                                                     G4double multipoleRatio,
+                                                     G4double angularRatio);
 
   virtual void SampleEnergy(G4double totalTransEnergy);
 
@@ -85,6 +85,7 @@ private:
 
   G4bool polarFlag;
   G4int fDim;
+  G4double eGamma1, eGamma2;
   std::vector<std::vector<G4double>> fRotationMatrix;
   G4RandGeneral *energySpectrumSampler;
   G4RandGeneral *angularDistributionSampler;
