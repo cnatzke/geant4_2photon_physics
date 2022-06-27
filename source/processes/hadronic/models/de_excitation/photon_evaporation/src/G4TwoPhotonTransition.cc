@@ -46,8 +46,9 @@
 #include "G4PhysicalConstants.hh"
 
 G4TwoPhotonTransition::G4TwoPhotonTransition()
-    : polarFlag(false), fDirection(0., 0., 0.), fVerbose(0)
+    : polarFlag(false), fDim(3), fDirection(0., 0., 0.), fVerbose(0)
 {
+  fRotationMatrix.resize(fDim, std::vector<G4double>(fDim, 0.));
 }
 
 G4TwoPhotonTransition::~G4TwoPhotonTransition()
@@ -181,6 +182,7 @@ void G4TwoPhotonTransition::SampleEnergy(G4double totalTransEnergy)
 
 void G4TwoPhotonTransition::SampleDirection()
 {
+  std::vector<std::vector<G4double>> rotationMatrix;
 
   // finding angular distribution of photons
   if (!angularDistributionSampler)
@@ -202,7 +204,29 @@ void G4TwoPhotonTransition::SampleDirection()
     G4ThreeVector v1 = G4ThreeVector(1., 2., 3.);
     G4ThreeVector v2 = G4ThreeVector(0., 0., 1.);
 
+    // Printing Matrix
+    G4cout << "\n Initial Rotation Matrix : \n ";
+    for (int i = 0; i < fDim; i++)
+    {
+      for (int j = 0; j < fDim; j++)
+        G4cout << fRotationMatrix[i][j] << " ";
+      G4cout << "\n ";
+    }
+    G4cout << "\n"
+           << G4endl;
+
     CreateRotationMatrix(v1, v2);
+
+    // Printing Matrix
+    G4cout << "Rotation Matrix : \n ";
+    for (int i = 0; i < fDim; i++)
+    {
+      for (int j = 0; j < fDim; j++)
+        G4cout << fRotationMatrix[i][j] << " ";
+      G4cout << "\n ";
+    }
+    G4cout << "\n"
+           << G4endl;
     /*
     // the first photon is emitted in a random direction and sets the axis
     G4double cosThetaFirstPhoton = 2. * G4UniformRand() - 1.0;
@@ -300,11 +324,11 @@ void G4TwoPhotonTransition::SetUpAngularDistributionSampler(G4float alphaE1, G4f
 
 void G4TwoPhotonTransition::CreateRotationMatrix(const G4ThreeVector &vector1, const G4ThreeVector &vector2)
 {
-
-  G4int dim = 3;
   G4ThreeVector a, b, v;
   G4double c;
-  G4int i, j;
+  G4double d[3][3];
+  G4int i, j, k;
+
   // first normalize the vectors
   a = vector1.unit();
   b = vector2.unit();
@@ -312,36 +336,44 @@ void G4TwoPhotonTransition::CreateRotationMatrix(const G4ThreeVector &vector1, c
   v = a.cross(b);
   c = a.dot(b);
 
-  G4double d[3] = {0, 0, 0};
-  G4double iMat[3][3] = {{1., 0, 0}, {0, 1., 0}, {0, 0, 1.}};
-  G4double kMat[3][3] = {{0., -v.z(), v.y()}, {v.z(), 0., -v.x()}, {-v.y(), v.x(), 0.0}};
+  G4double iMat[3][3] = {{1., 0, 0},
+                         {0, 1., 0},
+                         {0, 0, 1.}};
 
-  // matrix dot product
-  for (i = 0; i < dim; i++)
-  {
-    d[i] = 0;
-    for (j = 0; j < dim; j++)
-      d[i] += kMat[i][j] * kMat[i][j];
-  }
+  std::vector<std::vector<G4double>> rotationMatrix{{0., -v.z(), v.y()},
+                                                    {v.z(), 0., -v.x()},
+                                                    {-v.y(), v.x(), 0.0}};
 
-  // building the rotation matrix
-  for (i = 0; i < 3; i++)
+  // set product matrix to zero
+  for (i = 0; i < fDim; i++)
   {
-    for (j = 0; j < 3; j++)
+    for (j = 0; j < fDim; j++)
     {
-      kMat[i][j] = kMat[i][j] + iMat[i][j] + d[i] * (1.0 - c) / std::pow(v.mag(), 2);
+      d[i][j] = 0.;
     }
   }
 
-  // Printing Matrix
-  G4cout << "\n Rotation Matrix : \n ";
-  for (i = 0; i < dim; i++)
+  // matrix multiplication
+  for (i = 0; i < fDim; i++)
   {
-    for (j = 0; j < dim; j++)
-      G4cout << kMat[i][j] << " ";
-    G4cout << "\n ";
+    for (j = 0; j < fDim; j++)
+    {
+      for (k = 0; k < fDim; k++)
+      {
+        d[i][j] += rotationMatrix[i][k] * rotationMatrix[k][j];
+      }
+    }
   }
-  G4cout << "\n"
-         << G4endl;
+
+  // building the rotation matrix
+  for (i = 0; i < fDim; i++)
+  {
+    for (j = 0; j < fDim; j++)
+    {
+      rotationMatrix[i][j] = rotationMatrix[i][j] + iMat[i][j] + d[i][j] * (1.0 - c) / std::pow(v.mag(), 2);
+    }
+  }
+
+  fRotationMatrix = rotationMatrix;
 
 } // end FindRotationMatrix

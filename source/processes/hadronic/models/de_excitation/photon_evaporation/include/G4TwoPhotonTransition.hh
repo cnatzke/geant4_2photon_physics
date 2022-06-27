@@ -82,6 +82,8 @@ private:
   G4bool operator!=(const G4TwoPhotonTransition &right) const = delete;
 
   G4bool polarFlag;
+  G4int fDim;
+  std::vector<std::vector<G4double>> fRotationMatrix;
   G4RandGeneral *energySpectrumSampler;
   G4RandGeneral *angularDistributionSampler;
 
