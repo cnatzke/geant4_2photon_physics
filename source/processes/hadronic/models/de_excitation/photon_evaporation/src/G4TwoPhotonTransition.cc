@@ -46,7 +46,7 @@
 #include "G4PhysicalConstants.hh"
 
 G4TwoPhotonTransition::G4TwoPhotonTransition()
-    : polarFlag(false), fDim(3), fDirection(0., 0., 0.), fVerbose(0)
+    : polarFlag(false), fDim(3), fDirectionPhoton1(0., 0., 0.), fDirectionPhoton2(0., 0., 0.), fVerbose(0)
 {
   fRotationMatrix.resize(fDim, std::vector<G4double>(fDim, 0.));
 }
@@ -151,11 +151,6 @@ G4TwoPhotonTransition::SampleTransition(G4Fragment *nucleus,
 void G4TwoPhotonTransition::SampleEnergy(G4double totalTransEnergy)
 {
   // find continuous energy distribution of photons
-  if (fVerbose > 2)
-  {
-    G4cout << "## Initializing energy spectrum sampler ##" << G4endl;
-  }
-
   SetUpEnergySpectrumSampler(totalTransEnergy, fMultipoleRatio);
 
   if (energySpectrumSampler)
@@ -166,9 +161,9 @@ void G4TwoPhotonTransition::SampleEnergy(G4double totalTransEnergy)
 
     if (fVerbose > 2)
     {
-      G4cout << "G4TwoPhotonTransition::eGamma1 " << eGamma1 << " | "
-             << "G4TwoPhotonTransition::eGamma2 " << eGamma2 << " | "
-             << "G4TwoPhotonTransition::totalTransEnergy " << eGamma1 + eGamma2
+      G4cout << "G4TwoPhotonTransition::eGamma1: " << eGamma1 << " | "
+             << "G4TwoPhotonTransition::eGamma2: " << eGamma2 << " | "
+             << "G4TwoPhotonTransition::totalTransEnergy: " << eGamma1 + eGamma2
              << G4endl;
     }
   }
@@ -184,71 +179,41 @@ void G4TwoPhotonTransition::SampleDirection()
 {
   std::vector<std::vector<G4double>> rotationMatrix;
 
-  // finding angular distribution of photons
-  if (!angularDistributionSampler)
-  {
-    if (fVerbose > 2)
-    {
-      G4cout << "## Initializing angular distribution sampler ##" << G4endl;
-    }
-    // angular ratio = alpha / chi
-    // * there's probably a better way to do this but for now this works
-    G4double alphaE1 = fAngularRatio;
-    G4double chi = 1.0;
+  G4double alphaE1 = fAngularRatio;
+  G4double chi = 1.0;
 
-    SetUpAngularDistributionSampler(alphaE1, chi);
-  }
+  SetUpAngularDistributionSampler(alphaE1, chi);
 
   if (angularDistributionSampler)
   {
-    G4ThreeVector v1 = G4ThreeVector(1., 2., 3.);
-    G4ThreeVector v2 = G4ThreeVector(0., 0., 1.);
-
-    // Printing Matrix
-    G4cout << "\n Initial Rotation Matrix : \n ";
-    for (int i = 0; i < fDim; i++)
-    {
-      for (int j = 0; j < fDim; j++)
-        G4cout << fRotationMatrix[i][j] << " ";
-      G4cout << "\n ";
-    }
-    G4cout << "\n"
-           << G4endl;
-
-    CreateRotationMatrix(v1, v2);
-
-    // Printing Matrix
-    G4cout << "Rotation Matrix : \n ";
-    for (int i = 0; i < fDim; i++)
-    {
-      for (int j = 0; j < fDim; j++)
-        G4cout << fRotationMatrix[i][j] << " ";
-      G4cout << "\n ";
-    }
-    G4cout << "\n"
-           << G4endl;
-    /*
-    // the first photon is emitted in a random direction and sets the axis
-    G4double cosThetaFirstPhoton = 2. * G4UniformRand() - 1.0;
-    G4double sinThetaFirstPhoton = std::sqrt(1.0 - cosThetaFirstPhoton * cosThetaFirstPhoton);
-
-    G4double phiFirstPhotonPhoton = twopi * G4UniformRand() * rad;
-    G4double sinPhiFirstPhotonPhoton = std::sin(phiFirstPhotonPhoton);
-    G4double cosPhiFirstPhotonPhoton = std::cos(phiFirstPhotonPhoton);
-
-    fDirectionFirstPhoton.set(sinThetaFirstPhoton * cosPhiFirstPhotonPhoton, sinThetaFirstPhoton * sinPhiFirstPhotonPhoton, cosThetaFirstPhoton);
+    // the first photon is emitted in a random direction and sets the polarization axis
+    G4double theta1 = pi * G4UniformRand();
+    G4double phi1 = twopi * G4UniformRand();
 
     // sample the angle between the two photons
-    G4double theta = CLHEP::pi * angularDistributionSampler->shoot(G4Random::getTheEngine());
+    G4double theta2 = pi * angularDistributionSampler->shoot(G4Random::getTheEngine());
+    G4double phi2 = twopi * G4UniformRand();
 
-    // the second photon is emitted randomly in theta, but must obey the angle defined by "theta" above
-    G4double cosThetaSecondPhoton = 2. * G4UniformRand() - 1.0;
-    G4double sinThetaSecondPhoton = std::sqrt(1.0 - cosThetaSecondPhoton * cosThetaSecondPhoton);
+    G4ThreeVector labAxis = G4ThreeVector(0, 0, 1.);
+    G4ThreeVector polarizationAxis = SphericalToCartesian(theta1, phi1);
+    G4ThreeVector emissionVector = SphericalToCartesian(theta2, phi2);
 
-    G4double PhiFirstPhotonPhoton = twopi * G4UniformRand() * rad;
-    G4double sinPhiFirstPhotonPhoton = std::sin(PhiFirstPhotonPhoton);
-    G4double cosPhiFirstPhotonPhoton = std::cos(PhiFirstPhotonPhoton);
-    */
+    // find rotation matrix that maps lab axis to the polarization axis
+    CreateRotationMatrix(labAxis, polarizationAxis);
+
+    // rotate emission vector to polarization axis
+    G4ThreeVector rotatedEmissionVector = RotateVector(emissionVector);
+
+    // Check the angle between vectors
+    if (fVerbose > 2)
+    {
+      G4cout << "###### Angle SANITY CHECK ######" << G4endl;
+      G4cout << "Theta: " << theta2 << " | Angle: " << polarizationAxis.angle(rotatedEmissionVector) << G4endl;
+      G4cout << "#########################" << G4endl;
+    }
+
+    fDirectionPhoton1.set(polarizationAxis.getX(), polarizationAxis.getY(), polarizationAxis.getZ());
+    fDirectionPhoton2.set(rotatedEmissionVector.getX(), rotatedEmissionVector.getY(), rotatedEmissionVector.getZ());
   }
   else
   {
@@ -377,3 +342,38 @@ void G4TwoPhotonTransition::CreateRotationMatrix(const G4ThreeVector &vector1, c
   fRotationMatrix = rotationMatrix;
 
 } // end FindRotationMatrix
+
+G4ThreeVector G4TwoPhotonTransition::RotateVector(const G4ThreeVector &vector)
+{
+  G4int i, j;
+  G4double tempVal;
+  G4ThreeVector tempVec(0., 0., 0.);
+
+  for (i = 0; i < fDim; i++)
+  {
+    tempVal = 0.;
+    for (j = 0; j < fDim; j++)
+    {
+      tempVal += fRotationMatrix[i][j] * vector[j];
+    }
+    tempVec[i] = tempVal;
+  }
+
+  return tempVec;
+
+} // end RotateVector
+
+G4ThreeVector G4TwoPhotonTransition::SphericalToCartesian(const G4double &theta, const G4double &phi)
+{
+  G4ThreeVector res = G4ThreeVector(0., 0., 0.);
+
+  // find trigometric values
+  G4double cosTheta = std::cos(theta);
+  G4double sinTheta = std::sin(theta);
+  G4double cosPhi = std::cos(phi);
+  G4double sinPhi = std::sin(phi);
+
+  res.set(sinTheta * cosPhi, sinTheta * sinPhi, cosTheta);
+  return res;
+
+} // end SphericalToCartesian
