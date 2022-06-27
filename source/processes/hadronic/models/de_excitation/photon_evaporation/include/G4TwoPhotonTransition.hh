@@ -54,10 +54,10 @@ public:
 
   virtual ~G4TwoPhotonTransition();
 
-  virtual G4Fragment *SampleTransition(G4Fragment *nucleus,
-                                       G4double newExcEnergy,
-                                       G4double multipoleRatio,
-                                       G4double angularRatio);
+  virtual std::vector<G4Fragment *> SampleTransition(G4Fragment *nucleus,
+                                                     G4double newExcEnergy,
+                                                     G4double multipoleRatio,
+                                                     G4double angularRatio);
 
   virtual void SampleEnergy(G4double totalTransEnergy);
 
@@ -74,6 +74,9 @@ public:
 private:
   void SetUpEnergySpectrumSampler(G4double transitionEnergy, G4float multipoleRatio);
   void SetUpAngularDistributionSampler(G4float alphaE1, G4float chi);
+  void CreateRotationMatrix(const G4ThreeVector &vector1, const G4ThreeVector &vector2);
+  G4ThreeVector RotateVector(const G4ThreeVector &vector);
+  G4ThreeVector SphericalToCartesian(const G4double &theta, const G4double &phi);
 
   G4TwoPhotonTransition(const G4TwoPhotonTransition &right) = delete;
   const G4TwoPhotonTransition &operator=(const G4TwoPhotonTransition &right) = delete;
@@ -81,11 +84,15 @@ private:
   G4bool operator!=(const G4TwoPhotonTransition &right) const = delete;
 
   G4bool polarFlag;
+  G4int fDim;
+  G4double eGamma1, eGamma2;
+  std::vector<std::vector<G4double>> fRotationMatrix;
   G4RandGeneral *energySpectrumSampler;
   G4RandGeneral *angularDistributionSampler;
 
 protected:
-  G4ThreeVector fDirection;
+  G4ThreeVector fDirectionPhoton1;
+  G4ThreeVector fDirectionPhoton2;
   G4PolarizationTransition fPolTrans;
   G4int fVerbose;
   G4double fMultipoleRatio, fAngularRatio;

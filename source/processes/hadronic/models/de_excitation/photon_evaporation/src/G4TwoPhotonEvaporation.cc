@@ -380,7 +380,7 @@ G4TwoPhotonEvaporation::GenerateGammas(G4Fragment *nucleus)
     G4FragmentVector *products = new G4FragmentVector();
     G4Fragment *gamma1 = nullptr;
     G4Fragment *gamma2 = nullptr;
-    G4Fragment *gammaTest = nullptr;
+    std::vector<G4Fragment *> gammaTest;
 
     if (!isInitialised)
     {

@@ -46,15 +46,16 @@
 #include "G4PhysicalConstants.hh"
 
 G4TwoPhotonTransition::G4TwoPhotonTransition()
-    : polarFlag(false), fDirection(0., 0., 0.), fVerbose(0)
+    : polarFlag(false), fDim(3), fDirectionPhoton1(0., 0., 0.), fDirectionPhoton2(0., 0., 0.), fVerbose(0)
 {
+  fRotationMatrix.resize(fDim, std::vector<G4double>(fDim, 0.));
 }
 
 G4TwoPhotonTransition::~G4TwoPhotonTransition()
 {
 }
 
-G4Fragment *
+std::vector<G4Fragment *>
 G4TwoPhotonTransition::SampleTransition(G4Fragment *nucleus,
                                         G4double newExcEnergy,
                                         G4double multipoleRatio,
@@ -63,6 +64,8 @@ G4TwoPhotonTransition::SampleTransition(G4Fragment *nucleus,
   fMultipoleRatio = multipoleRatio;
   fAngularRatio = angularRatio;
   G4Fragment *resultGamma1 = nullptr;
+  G4Fragment *resultGamma2 = nullptr;
+  std::vector<G4Fragment *> resultsVector;
 
   G4double totalTransEnergy = nucleus->GetExcitationEnergy() - newExcEnergy;
   if (fVerbose > 2)
@@ -76,55 +79,41 @@ G4TwoPhotonTransition::SampleTransition(G4Fragment *nucleus,
     G4Exception("G4TwoPhotonTransition::SampleTransition()", "HAD_TWOPHOTON_000", FatalException, "Total transition energy is less than 0.0");
   }
 
-  // Do complete Lorentz computation
-  G4LorentzVector lv = nucleus->GetMomentum();
-  G4double mass = nucleus->GetGroundStateMass() + newExcEnergy;
-
   // select secondaries
   G4ParticleDefinition *gamma1 = G4Gamma::Gamma();
   G4ParticleDefinition *gamma2 = G4Gamma::Gamma();
 
+  // get energies of photons and emission directions
   SampleEnergy(totalTransEnergy);
-
   SampleDirection();
 
-  energySpectrumSampler = NULL;
-
-  return resultGamma1;
-  /*
-  if (polarFlag)
-  {
-    SampleDirection(nucleus, mpRatio, JP1, JP2, MP);
-  }
-  else
-  {
-    fDirection = G4RandomDirection();
-  }
-
-  G4double emass = part->GetPDGMass();
-
-  // 2-body decay in rest frame
+  // Do complete Lorentz computation
+  G4LorentzVector lv = nucleus->GetMomentum();
+  G4double mass = nucleus->GetGroundStateMass() + newExcEnergy;
   G4double ecm = lv.mag();
   G4ThreeVector bst = lv.boostVector();
-  if (!isGamma)
-  {
-    ecm += (CLHEP::electron_mass_c2 - bond_energy);
-  }
 
-  // G4cout << "Ecm= " << ecm << " mass= " << mass << " emass= " << emass << G4endl;
+  ecm = std::max(ecm, mass);
+  G4double energy = 0.5 * ((ecm - mass) * (ecm + mass)) / ecm;
+  G4double momPhoton1 = energy * (eGamma1 / totalTransEnergy);
+  G4double momPhoton2 = energy - momPhoton1;
 
-  ecm = std::max(ecm, mass + emass);
-  G4double energy = 0.5 * ((ecm - mass) * (ecm + mass) + emass * emass) / ecm;
-  G4double mom = (emass > 0.0) ? std::sqrt((energy - emass) * (energy + emass))
-                               : energy;
+  G4LorentzVector photon1FourMom(momPhoton1 * fDirectionPhoton1.x(),
+                                 momPhoton1 * fDirectionPhoton1.y(),
+                                 momPhoton1 * fDirectionPhoton1.z(), eGamma1);
 
-  // emitted gamma or e-
-  G4LorentzVector res4mom(mom * fDirection.x(),
-                          mom * fDirection.y(),
-                          mom * fDirection.z(), energy);
+  G4LorentzVector photon2FourMom(momPhoton2 * fDirectionPhoton2.x(),
+                                 momPhoton2 * fDirectionPhoton2.y(),
+                                 momPhoton2 * fDirectionPhoton2.z(), eGamma2);
+
+  // G4cout << momPhoton1 << ", " << momPhoton2 << ", " << eGamma1 << ", " << eGamma2 << G4endl;
+
   // residual
   energy = std::max(ecm - energy, mass);
-  lv.set(-mom * fDirection.x(), -mom * fDirection.y(), -mom * fDirection.z(), energy);
+  lv.set(-(momPhoton1 * fDirectionPhoton1.x() + momPhoton2 * fDirectionPhoton2.x()),
+         -(momPhoton1 * fDirectionPhoton1.y() + momPhoton2 * fDirectionPhoton2.y()),
+         -(momPhoton1 * fDirectionPhoton1.z() + momPhoton2 * fDirectionPhoton2.z()),
+         energy);
 
   // Lab system transform for short lived level
   lv.boost(bst);
@@ -133,43 +122,42 @@ G4TwoPhotonTransition::SampleTransition(G4Fragment *nucleus,
   nucleus->SetExcEnergyAndMomentum(newExcEnergy, lv);
 
   // gamma or e- are produced
-  res4mom.boost(bst);
-  result = new G4Fragment(res4mom, part);
+  photon1FourMom.boost(bst);
+  photon2FourMom.boost(bst);
 
-  // G4cout << " DeltaE= " << e0 - lv.e() - res4mom.e() + emass
-  //	 << "   Emass= " << emass << G4endl;
+  resultGamma1 = new G4Fragment(photon1FourMom, gamma1);
+  resultGamma2 = new G4Fragment(photon2FourMom, gamma2);
+
+  resultsVector.push_back(resultGamma1);
+  resultsVector.push_back(resultGamma2);
+
+  /*
   if (fVerbose > 2)
   {
-    G4cout << "G4TwoPhotonTransition::SampleTransition : " << *result << G4endl;
+    G4cout << "G4TwoPhotonTransition::SampleTransition : " << *resultsVector << G4endl;
     G4cout << "       Left nucleus: " << *nucleus << G4endl;
   }
-  return result;
   */
+
+  return resultsVector;
 }
 
 void G4TwoPhotonTransition::SampleEnergy(G4double totalTransEnergy)
 {
   // find continuous energy distribution of photons
-  if (!energySpectrumSampler)
-  {
-    if (fVerbose > 2)
-    {
-      G4cout << "## Initializing energy spectrum sampler ##" << G4endl;
-    }
-
-    SetUpEnergySpectrumSampler(totalTransEnergy, fMultipoleRatio);
-  }
+  SetUpEnergySpectrumSampler(totalTransEnergy, fMultipoleRatio);
 
   if (energySpectrumSampler)
   {
-    G4double eGamma1 = totalTransEnergy * energySpectrumSampler->shoot(G4Random::getTheEngine());
-    G4double eGamma2 = totalTransEnergy - eGamma1; // keV
+
+    eGamma1 = totalTransEnergy * energySpectrumSampler->shoot(G4Random::getTheEngine());
+    eGamma2 = totalTransEnergy - eGamma1; // keV
 
     if (fVerbose > 2)
     {
-      G4cout << "G4TwoPhotonTransition::eGamma1 " << eGamma1 << " | "
-             << "G4TwoPhotonTransition::eGamma2 " << eGamma2 << " | "
-             << "G4TwoPhotonTransition::totalTransEnergy " << eGamma1 + eGamma2
+      G4cout << "G4TwoPhotonTransition::eGamma1: " << eGamma1 << " | "
+             << "G4TwoPhotonTransition::eGamma2: " << eGamma2 << " | "
+             << "G4TwoPhotonTransition::totalTransEnergy: " << eGamma1 + eGamma2
              << G4endl;
     }
   }
@@ -183,32 +171,43 @@ void G4TwoPhotonTransition::SampleEnergy(G4double totalTransEnergy)
 
 void G4TwoPhotonTransition::SampleDirection()
 {
+  std::vector<std::vector<G4double>> rotationMatrix;
 
-  // finding angular distribution of photons
-  if (!angularDistributionSampler)
-  {
-    if (fVerbose > 2)
-    {
-      G4cout << "## Initializing angular distribution sampler ##" << G4endl;
-    }
-    // angular ratio = alpha / chi
-    // * there's probably a better way to do this but for now this works
-    G4double alphaE1 = fAngularRatio;
-    G4double chi = 1.0;
+  G4double alphaE1 = fAngularRatio;
+  G4double chi = 1.0;
 
-    SetUpAngularDistributionSampler(alphaE1, chi);
-  }
+  SetUpAngularDistributionSampler(alphaE1, chi);
 
   if (angularDistributionSampler)
   {
-    G4double theta = CLHEP::pi * angularDistributionSampler->shoot(G4Random::getTheEngine());
+    // the first photon is emitted in a random direction and sets the polarization axis
+    G4double theta1 = pi * G4UniformRand();
+    G4double phi1 = twopi * G4UniformRand();
 
+    // sample the angle between the two photons
+    G4double theta2 = pi * angularDistributionSampler->shoot(G4Random::getTheEngine());
+    G4double phi2 = twopi * G4UniformRand();
+
+    G4ThreeVector labAxis = G4ThreeVector(0, 0, 1.);
+    G4ThreeVector polarizationAxis = SphericalToCartesian(theta1, phi1);
+    G4ThreeVector emissionVector = SphericalToCartesian(theta2, phi2);
+
+    // find rotation matrix that maps lab axis to the polarization axis
+    CreateRotationMatrix(labAxis, polarizationAxis);
+
+    // rotate emission vector to polarization axis
+    G4ThreeVector rotatedEmissionVector = RotateVector(emissionVector);
+
+    // Check the angle between vectors
     if (fVerbose > 2)
     {
-      G4cout << "###### G4TwoPhotonTransition::angularRatio " << fAngularRatio << " | "
-             << "G4TwoPhotonTransition::theta " << theta
-             << G4endl;
+      G4cout << "###### Angle SANITY CHECK ######" << G4endl;
+      G4cout << "Theta: " << theta2 << " | Angle: " << polarizationAxis.angle(rotatedEmissionVector) << G4endl;
+      G4cout << "#########################" << G4endl;
     }
+
+    fDirectionPhoton1.set(polarizationAxis.getX(), polarizationAxis.getY(), polarizationAxis.getZ());
+    fDirectionPhoton2.set(rotatedEmissionVector.getX(), rotatedEmissionVector.getY(), rotatedEmissionVector.getZ());
   }
   else
   {
@@ -281,3 +280,94 @@ void G4TwoPhotonTransition::SetUpAngularDistributionSampler(G4float alphaE1, G4f
   angularDistributionSampler = new G4RandGeneral(pdf, npti);
   delete[] pdf;
 }
+
+void G4TwoPhotonTransition::CreateRotationMatrix(const G4ThreeVector &vector1, const G4ThreeVector &vector2)
+{
+  G4ThreeVector a, b, v;
+  G4double c;
+  G4double d[3][3];
+  G4int i, j, k;
+
+  // first normalize the vectors
+  a = vector1.unit();
+  b = vector2.unit();
+
+  v = a.cross(b);
+  c = a.dot(b);
+
+  G4double iMat[3][3] = {{1., 0, 0},
+                         {0, 1., 0},
+                         {0, 0, 1.}};
+
+  std::vector<std::vector<G4double>> rotationMatrix{{0., -v.z(), v.y()},
+                                                    {v.z(), 0., -v.x()},
+                                                    {-v.y(), v.x(), 0.0}};
+
+  // set product matrix to zero
+  for (i = 0; i < fDim; i++)
+  {
+    for (j = 0; j < fDim; j++)
+    {
+      d[i][j] = 0.;
+    }
+  }
+
+  // matrix multiplication
+  for (i = 0; i < fDim; i++)
+  {
+    for (j = 0; j < fDim; j++)
+    {
+      for (k = 0; k < fDim; k++)
+      {
+        d[i][j] += rotationMatrix[i][k] * rotationMatrix[k][j];
+      }
+    }
+  }
+
+  // building the rotation matrix
+  for (i = 0; i < fDim; i++)
+  {
+    for (j = 0; j < fDim; j++)
+    {
+      rotationMatrix[i][j] = rotationMatrix[i][j] + iMat[i][j] + d[i][j] * (1.0 - c) / std::pow(v.mag(), 2);
+    }
+  }
+
+  fRotationMatrix = rotationMatrix;
+
+} // end FindRotationMatrix
+
+G4ThreeVector G4TwoPhotonTransition::RotateVector(const G4ThreeVector &vector)
+{
+  G4int i, j;
+  G4double tempVal;
+  G4ThreeVector tempVec(0., 0., 0.);
+
+  for (i = 0; i < fDim; i++)
+  {
+    tempVal = 0.;
+    for (j = 0; j < fDim; j++)
+    {
+      tempVal += fRotationMatrix[i][j] * vector[j];
+    }
+    tempVec[i] = tempVal;
+  }
+
+  return tempVec;
+
+} // end RotateVector
+
+G4ThreeVector G4TwoPhotonTransition::SphericalToCartesian(const G4double &theta, const G4double &phi)
+{
+  G4ThreeVector res = G4ThreeVector(0., 0., 0.);
+
+  // find trigometric values
+  G4double cosTheta = std::cos(theta);
+  G4double sinTheta = std::sin(theta);
+  G4double cosPhi = std::cos(phi);
+  G4double sinPhi = std::sin(phi);
+
+  res.set(sinTheta * cosPhi, sinTheta * sinPhi, cosTheta);
+  return res;
+
+} // end SphericalToCartesian
