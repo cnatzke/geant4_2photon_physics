@@ -53,7 +53,6 @@
 // const G4int MAXDEPOINT = 10;
 // const G4int MAXGRDATA  = 300;
 
-class G4GammaTransition;
 class G4TwoPhotonTransition;
 class G4NuclearPolarizationStore;
 
@@ -61,7 +60,7 @@ class G4TwoPhotonEvaporation : public G4VEvaporationChannel
 {
 
 public:
-  explicit G4TwoPhotonEvaporation(G4GammaTransition *ptr = nullptr);
+  explicit G4TwoPhotonEvaporation(G4TwoPhotonTransition *ptr = nullptr);
 
   virtual ~G4TwoPhotonEvaporation();
 
@@ -85,7 +84,7 @@ public:
 
   virtual G4double GetUpperLevelEnergy(G4int Z, G4int A) final;
 
-  void SetGammaTransition(G4GammaTransition *);
+  void SetTwoPhotonTransition(G4TwoPhotonTransition *);
 
   virtual void RDMForced(G4bool);
 
@@ -111,8 +110,7 @@ private:
 
   G4NuclearLevelData *fNuclearLevelData;
   const G4LevelManager *fLevelManager;
-  G4GammaTransition *fTransition;
-  G4TwoPhotonTransition *fTestTransition;
+  G4TwoPhotonTransition *fTransition;
   G4NuclearPolarizationStore *fNucPStore;
 
   // fPolarization stores polarization tensor for consecutive

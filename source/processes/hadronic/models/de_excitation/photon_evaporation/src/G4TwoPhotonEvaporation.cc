@@ -45,7 +45,6 @@
 #include "G4Gamma.hh"
 #include "G4LorentzVector.hh"
 #include "G4FragmentVector.hh"
-#include "G4GammaTransition.hh"
 #include "G4TwoPhotonTransition.hh"
 #include "G4Pow.hh"
 #include <CLHEP/Units/SystemOfUnits.h>
@@ -58,7 +57,7 @@ G4float G4TwoPhotonEvaporation::GRWidth[] = {0.0f};
 G4Mutex G4TwoPhotonEvaporation::PhotonEvaporationMutex = G4MUTEX_INITIALIZER;
 #endif
 
-G4TwoPhotonEvaporation::G4TwoPhotonEvaporation(G4GammaTransition *p)
+G4TwoPhotonEvaporation::G4TwoPhotonEvaporation(G4TwoPhotonTransition *p)
     : fLevelManager(nullptr), fTransition(p), fPolarization(nullptr),
       fVerbose(1), fPoints(0), vShellNumber(-1), fIndex(0),
       fMaxLifeTime(DBL_MAX), fRDM(false), fSampleTime(true),
@@ -69,16 +68,10 @@ G4TwoPhotonEvaporation::G4TwoPhotonEvaporation(G4GammaTransition *p)
     fNucPStore = G4NuclearPolarizationStore::GetInstance();
     LevelDensity = 0.125 / CLHEP::MeV;
     Tolerance = 20 * CLHEP::eV;
-    fTestTransition = NULL;
 
     if (!fTransition)
     {
-        fTransition = new G4GammaTransition();
-    }
-
-    if (!fTestTransition)
-    {
-        fTestTransition = new G4TwoPhotonTransition();
+        fTransition = new G4TwoPhotonTransition();
     }
 
     theA = theZ = fCode = 0;
@@ -118,7 +111,6 @@ void G4TwoPhotonEvaporation::Initialise()
     fCorrelatedGamma = param->CorrelatedGamma();
 
     fTransition->SetPolarizationFlag(fCorrelatedGamma);
-    fTransition->SetTwoJMAX(param->GetTwoJMAX());
     fTransition->SetVerbose(fVerbose);
 }
 
@@ -378,9 +370,7 @@ G4FragmentVector *
 G4TwoPhotonEvaporation::GenerateGammas(G4Fragment *nucleus)
 {
     G4FragmentVector *products = new G4FragmentVector();
-    G4Fragment *gamma1 = nullptr;
-    G4Fragment *gamma2 = nullptr;
-    std::vector<G4Fragment *> gammaTest;
+    std::vector<G4Fragment *> gammas;
 
     if (!isInitialised)
     {
@@ -509,82 +499,49 @@ G4TwoPhotonEvaporation::GenerateGammas(G4Fragment *nucleus)
         return products;
     }
 
-    // * CRN new style here
-    fTestTransition->SetVerbose(3);
-    gammaTest = fTestTransition->SampleTransition(nucleus, efinal, fMultipoleMixing, fAngularRatio);
-
     G4double eTransTotal = std::abs(efinal - eexc);
 
-    if (!energySpectrumSampler)
+    // Let transition class handle angular and energy distributions
+    gammas = fTransition->SampleTransition(nucleus, efinal, fMultipoleMixing, fAngularRatio);
+
+    if (gammas.size() != 0)
     {
-        SetUpEnergySpectrumSampler(eTransTotal);
+        gammas.at(0)->SetCreationTime(time);
+        gammas.at(1)->SetCreationTime(time);
+        products->push_back(gammas.at(0));
+        products->push_back(gammas.at(1));
     }
 
-    if (energySpectrumSampler)
+    // updated residual nucleus
+    nucleus->SetCreationTime(time);
+    nucleus->SetSpin(0.5 * JP2);
+    if (fPolarization)
     {
+        fPolarization->SetExcitationEnergy(efinal);
+    }
 
-        SetUpEnergySpectrumSampler(eTransTotal);
-        // Sample energy from known energy distribution
-        G4double eGamma1 = eTransTotal * energySpectrumSampler->shoot(G4Random::getTheEngine());
-        // G4cout << "--> Sampled gamma energy: " << eGamma1 / CLHEP::keV << " keV" << G4endl;
-        if (eGamma1 < 0.0)
-            eGamma1 = 0.;
-        if (eGamma1 > eTransTotal)
-            eGamma1 = eTransTotal - .001;
+    // ignore the floating levels with zero energy and create ground state
+    if (efinal == 0.0 && fIndex > 0)
+    {
+        fIndex = 0;
+        nucleus->SetFloatingLevelNumber(fLevelManager->FloatingLevel(fIndex));
+    }
 
-        G4double eGamma2 = eTransTotal - eGamma1; // keV
-
-        gamma1 = fTransition->SampleTransition(nucleus, eGamma1, ratio, JP1,
-                                               JP2, multiP, vShellNumber,
-                                               isDiscrete, isGamma);
-        gamma2 = fTransition->SampleTransition(nucleus, efinal, ratio, JP1,
-                                               JP2, multiP, vShellNumber,
-                                               isDiscrete, isGamma);
-
-        if (gamma1)
-        {
-            gamma1->SetCreationTime(time);
-            products->push_back(gamma1);
-        }
-        if (gamma2)
-        {
-            gamma2->SetCreationTime(time);
-            products->push_back(gamma2);
-        }
-
-        // updated residual nucleus
-        nucleus->SetCreationTime(time);
-        nucleus->SetSpin(0.5 * JP2);
-        if (fPolarization)
-        {
-            fPolarization->SetExcitationEnergy(efinal);
-        }
-
-        // ignore the floating levels with zero energy and create ground state
-        if (efinal == 0.0 && fIndex > 0)
-        {
-            fIndex = 0;
-            nucleus->SetFloatingLevelNumber(fLevelManager->FloatingLevel(fIndex));
-        }
-
-        if (fVerbose > 1)
-        {
-            G4cout << "Final level E= " << efinal << " time= " << time
-                   << " idxFinal= " << fIndex << " isDiscrete: " << isDiscrete
-                   << " isGamma: " << isGamma << " multiP= " << multiP
-                   << " shell= " << vShellNumber
-                   << " JP1= " << JP1 << " JP2= " << JP2 << G4endl;
-        }
-        if (fVerbose > 1)
-        {
-            G4cout << G4endl;
-            G4cout << "----------------> TWO PHOTON DECAY <---------------" << G4endl;
-            G4cout << "gamma energies: " << eGamma1 / CLHEP::keV << " | " << eGamma2 / CLHEP::keV << G4endl;
-            G4cout << "total energy: " << eTransTotal / CLHEP::keV << G4endl;
-            G4cout << G4endl;
-        }
-
-        energySpectrumSampler = NULL;
+    if (fVerbose > 1)
+    {
+        G4cout << "Final level E= " << efinal << " time= " << time
+               << " idxFinal= " << fIndex << " isDiscrete: " << isDiscrete
+               << " isGamma: " << isGamma << " multiP= " << multiP
+               << " shell= " << vShellNumber
+               << " JP1= " << JP1 << " JP2= " << JP2 << G4endl;
+    }
+    if (fVerbose > 1)
+    {
+        G4cout << G4endl;
+        G4cout << "----------------> TWO PHOTON DECAY <---------------" << G4endl;
+        // G4cout << "gamma energies: " << eGamma1 / CLHEP::keV << " | " << eGamma2 / CLHEP::keV << G4endl;
+        G4cout << "total energy: " << eTransTotal / CLHEP::keV << G4endl;
+        G4cout << G4endl;
     }
 
     return products;
@@ -625,7 +582,7 @@ void G4TwoPhotonEvaporation::SetUpEnergySpectrumSampler(G4double transitionEnerg
     }
 }
 
-void G4TwoPhotonEvaporation::SetGammaTransition(G4GammaTransition *p)
+void G4TwoPhotonEvaporation::SetTwoPhotonTransition(G4TwoPhotonTransition *p)
 {
     if (p != fTransition)
     {
