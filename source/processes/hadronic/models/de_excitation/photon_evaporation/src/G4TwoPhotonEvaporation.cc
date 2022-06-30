@@ -50,23 +50,18 @@
 #include <CLHEP/Units/SystemOfUnits.h>
 #include <CLHEP/Units/PhysicalConstants.h>
 
-G4float G4TwoPhotonEvaporation::GREnergy[] = {0.0f};
-G4float G4TwoPhotonEvaporation::GRWidth[] = {0.0f};
-
 #ifdef G4MULTITHREADED
 G4Mutex G4TwoPhotonEvaporation::PhotonEvaporationMutex = G4MUTEX_INITIALIZER;
 #endif
 
 G4TwoPhotonEvaporation::G4TwoPhotonEvaporation(G4TwoPhotonTransition *p)
     : fLevelManager(nullptr), fTransition(p), fPolarization(nullptr),
-      fVerbose(0), fPoints(0), vShellNumber(-1), fIndex(0),
-      fMaxLifeTime(DBL_MAX), fRDM(false), fSampleTime(true),
-      fCorrelatedGamma(false), isInitialised(false)
+      fVerbose(0), fPoints(0), fIndex(0), fMaxLifeTime(DBL_MAX), fRDM(false),
+      fSampleTime(true), isInitialised(false)
 {
     // G4cout << "### New G4TwoPhotonEvaporation() " << this << G4endl;
     fNuclearLevelData = G4NuclearLevelData::GetInstance();
     fNucPStore = G4NuclearPolarizationStore::GetInstance();
-    LevelDensity = 0.125 / CLHEP::MeV;
     Tolerance = 20 * CLHEP::eV;
 
     if (!fTransition)
@@ -80,10 +75,6 @@ G4TwoPhotonEvaporation::G4TwoPhotonEvaporation(G4TwoPhotonTransition *p)
     for (G4int i = 0; i < MAXDEPOINT; ++i)
     {
         fCummProbability[i] = 0.0;
-    }
-    if (0.0f == GREnergy[1])
-    {
-        InitialiseGRData();
     }
 }
 
@@ -105,33 +96,10 @@ void G4TwoPhotonEvaporation::Initialise()
         G4cout << "### G4TwoPhotonEvaporation is initialized " << this << G4endl;
     }
     G4DeexPrecoParameters *param = fNuclearLevelData->GetParameters();
-    LevelDensity = param->GetLevelDensity();
     Tolerance = param->GetMinExcitation();
     fMaxLifeTime = param->GetMaxLifeTime();
-    fCorrelatedGamma = param->CorrelatedGamma();
 
-    fTransition->SetPolarizationFlag(fCorrelatedGamma);
     fTransition->SetVerbose(fVerbose);
-}
-
-void G4TwoPhotonEvaporation::InitialiseGRData()
-{
-#ifdef G4MULTITHREADED
-    G4MUTEXLOCK(&G4TwoPhotonEvaporation::PhotonEvaporationMutex);
-#endif
-    if (0.0f == GREnergy[1])
-    {
-        G4Pow *g4calc = G4Pow::GetInstance();
-        static const G4float GRWfactor = 0.3f;
-        for (G4int A = 1; A < MAXGRDATA; ++A)
-        {
-            GREnergy[A] = (G4float)(40.3 * CLHEP::MeV / g4calc->powZ(A, 0.2));
-            GRWidth[A] = GRWfactor * GREnergy[A];
-        }
-    }
-#ifdef G4MULTITHREADED
-    G4MUTEXUNLOCK(&G4TwoPhotonEvaporation::PhotonEvaporationMutex);
-#endif
 }
 
 G4FragmentVector *
@@ -151,7 +119,7 @@ G4TwoPhotonEvaporation::EmittedFragments(G4Fragment *nucleus)
         {
             G4cout << "NucPolar: " << fPolarization << G4endl;
         }
-        G4cout << " CorrGamma: " << fCorrelatedGamma << " RDM: " << fRDM
+        G4cout << " RDM: " << fRDM
                << " fPolarization: " << fPolarization << G4endl;
     }
     G4FragmentVector *gammas = GenerateGammas(nucleus);
@@ -180,168 +148,6 @@ G4TwoPhotonEvaporation::EmittedFragments(G4Fragment *nucleus)
         G4cout << "   Residual: " << *nucleus << G4endl;
     }
     return gammas;
-}
-
-G4FragmentVector *
-G4TwoPhotonEvaporation::BreakItUp(const G4Fragment &nucleus)
-{
-    if (fVerbose > 0)
-    {
-        G4cout << "G4TwoPhotonEvaporation::BreakItUp" << G4endl;
-    }
-    G4Fragment *aNucleus = new G4Fragment(nucleus);
-    G4FragmentVector *products = new G4FragmentVector();
-    BreakUpChain(products, aNucleus);
-    products->push_back(aNucleus);
-    return products;
-}
-
-G4bool G4TwoPhotonEvaporation::BreakUpChain(G4FragmentVector *products,
-                                            G4Fragment *nucleus)
-{
-    if (!isInitialised)
-    {
-        Initialise();
-    }
-    if (fVerbose > 0)
-    {
-        G4cout << "G4TwoPhotonEvaporation::BreakUpChain RDM= " << fRDM << " "
-               << *nucleus << G4endl;
-    }
-    G4Fragment *gamma = nullptr;
-    fSampleTime = (fRDM) ? false : true;
-
-    // start decay chain from unpolarized state
-    if (fCorrelatedGamma)
-    {
-        fPolarization = new G4NuclearPolarization(nucleus->GetZ_asInt(),
-                                                  nucleus->GetA_asInt(),
-                                                  nucleus->GetExcitationEnergy());
-        nucleus->SetNuclearPolarization(fPolarization);
-    }
-
-    do
-    {
-        // gamma = GenerateGamma(nucleus);
-        if (gamma)
-        {
-            products->push_back(gamma);
-            if (fVerbose > 0)
-            {
-                G4cout << "G4TwoPhotonEvaporation::BreakUpChain: "
-                       << *gamma << G4endl;
-                G4cout << "   Residual: " << *nucleus << G4endl;
-            }
-            // for next decays in the chain always sample time
-            fSampleTime = true;
-        }
-        // Loop checking, 05-Aug-2015, Vladimir Ivanchenko
-    } while (gamma);
-
-    // clear nuclear polarization end of chain
-    if (fPolarization)
-    {
-        delete fPolarization;
-        fPolarization = nullptr;
-        nucleus->SetNuclearPolarization(fPolarization);
-    }
-    return false;
-}
-
-G4double
-G4TwoPhotonEvaporation::GetEmissionProbability(G4Fragment *nucleus)
-{
-    if (!isInitialised)
-    {
-        Initialise();
-    }
-    fProbability = 0.0;
-    fExcEnergy = nucleus->GetExcitationEnergy();
-    G4int Z = nucleus->GetZ_asInt();
-    G4int A = nucleus->GetA_asInt();
-    fCode = 1000 * Z + A;
-    if (fVerbose > 1)
-    {
-        G4cout << "G4TwoPhotonEvaporation::GetEmissionProbability: Z="
-               << Z << " A=" << A << " Eexc(MeV)= " << fExcEnergy << G4endl;
-    }
-    // ignore gamma de-excitation for exotic fragments
-    // and for very low excitations
-    if (0 >= Z || 1 >= A || Z == A || Tolerance >= fExcEnergy)
-    {
-        return fProbability;
-    }
-
-    // ignore gamma de-excitation for highly excited levels
-    if (A >= MAXGRDATA)
-    {
-        A = MAXGRDATA - 1;
-    }
-    // G4cout<<" GREnergy= "<< GREnergy[A]<<" GRWidth= "<<GRWidth[A]<<G4endl;
-
-    static const G4float GREfactor = 5.0f;
-    if (fExcEnergy >= (G4double)(GREfactor * GRWidth[A] + GREnergy[A]))
-    {
-        return fProbability;
-    }
-    // probability computed assuming continium transitions
-    // VI: continium transition are limited only to final states
-    //     below Fermi energy (this approach needs further evaluation)
-    G4double emax = std::max(0.0, nucleus->ComputeGroundStateMass(Z, A - 1) + CLHEP::neutron_mass_c2 - nucleus->GetGroundStateMass());
-
-    // max energy level for continues transition
-    emax = std::min(emax, fExcEnergy);
-    const G4double eexcfac = 0.99;
-    if (0.0 == emax || fExcEnergy * eexcfac <= emax)
-    {
-        emax = fExcEnergy * eexcfac;
-    }
-
-    fStep = emax;
-    static const G4double MaxDeltaEnergy = CLHEP::MeV;
-    fPoints = std::min((G4int)(fStep / MaxDeltaEnergy) + 2, MAXDEPOINT);
-    fStep /= ((G4double)(fPoints - 1));
-    if (fVerbose > 1)
-    {
-        G4cout << "Emax= " << emax << " Npoints= " << fPoints
-               << "  Eex= " << fExcEnergy << G4endl;
-    }
-    // integrate probabilities
-    G4double eres = (G4double)GREnergy[A];
-    G4double wres = (G4double)GRWidth[A];
-    G4double eres2 = eres * eres;
-    G4double wres2 = wres * wres;
-    G4double xsqr = std::sqrt(A * LevelDensity * fExcEnergy);
-
-    G4double egam = fExcEnergy;
-    G4double gammaE2 = egam * egam;
-    G4double gammaR2 = gammaE2 * wres2;
-    G4double egdp2 = gammaE2 - eres2;
-
-    G4double p0 = G4Exp(-2.0 * xsqr) * gammaR2 * gammaE2 / (egdp2 * egdp2 + gammaR2);
-    G4double p1(0.0);
-
-    for (G4int i = 1; i < fPoints; ++i)
-    {
-        egam -= fStep;
-        gammaE2 = egam * egam;
-        gammaR2 = gammaE2 * wres2;
-        egdp2 = gammaE2 - eres2;
-        p1 = G4Exp(2.0 * (std::sqrt(A * LevelDensity * std::abs(fExcEnergy - egam)) - xsqr)) * gammaR2 * gammaE2 / (egdp2 * egdp2 + gammaR2);
-        fProbability += (p1 + p0);
-        fCummProbability[i] = fProbability;
-        // G4cout << "Egamma= " << egam << "  Eex= " << fExcEnergy
-        //<< "  p0= " << p0 << " p1= " << p1 << " sum= " << fCummProbability[i] <<G4endl;
-        p0 = p1;
-    }
-
-    static const G4double NormC = 1.25 * CLHEP::millibarn / (CLHEP::pi2 * CLHEP::hbarc * CLHEP::hbarc);
-    fProbability *= fStep * NormC * A;
-    if (fVerbose > 1)
-    {
-        G4cout << "prob= " << fProbability << G4endl;
-    }
-    return fProbability;
 }
 
 G4double
@@ -387,8 +193,6 @@ G4TwoPhotonEvaporation::GenerateGammas(G4Fragment *nucleus)
     G4double time = nucleus->GetCreationTime();
 
     G4double efinal = 0.0;
-    G4double ratio = 0.0;
-    vShellNumber = -1;
     G4int JP1 = 0;
     G4int JP2 = 0;
     G4int multiP = 0;
@@ -443,18 +247,17 @@ G4TwoPhotonEvaporation::GenerateGammas(G4Fragment *nucleus)
                << " A= " << nucleus->GetA_asInt()
                << " Exc= " << eexc << " Emax= "
                << fLevelEnergyMax << " idx= " << fIndex
-               << " fCode= " << fCode << " fPoints= " << fPoints
+               << " fCode= " << fCode
                << " Ntr= " << ntrans << " discrete: " << isDiscrete
                << " fProb= " << fProbability << G4endl;
         G4cout.precision(prec);
     }
 
-    // continues part
+    // No continuous decays
     if (!isDiscrete)
     {
         G4cerr << "Two-photon transition does not come from a discrete level" << G4endl;
     }
-    // * discrete transitions
     else
     {
         if (fVerbose > 1)
@@ -480,7 +283,6 @@ G4TwoPhotonEvaporation::GenerateGammas(G4Fragment *nucleus)
         size_t idx = 0;
         // it is discrete transition with possible gamma correlation
         isDiscrete = true;
-        ratio = level->MultipolarityRatio(idx);
         multiP = level->TransitionType(idx);
         fIndex = level->FinalExcitationIndex(idx);
         JP2 = fLevelManager->SpinTwo(fIndex);
@@ -532,7 +334,6 @@ G4TwoPhotonEvaporation::GenerateGammas(G4Fragment *nucleus)
         G4cout << "Final level E= " << efinal << " time= " << time
                << " idxFinal= " << fIndex << " isDiscrete: " << isDiscrete
                << " isGamma: " << isGamma << " multiP= " << multiP
-               << " shell= " << vShellNumber
                << " JP1= " << JP1 << " JP2= " << JP2 << G4endl;
     }
     if (fVerbose > 1)
@@ -594,4 +395,105 @@ void G4TwoPhotonEvaporation::SetTwoPhotonTransition(G4TwoPhotonTransition *p)
 void G4TwoPhotonEvaporation::RDMForced(G4bool val)
 {
     fRDM = val;
+}
+
+G4double
+G4TwoPhotonEvaporation::GetEmissionProbability(G4Fragment *nucleus)
+{
+    if (!isInitialised)
+    {
+        Initialise();
+    }
+    fProbability = 0.0;
+    fExcEnergy = nucleus->GetExcitationEnergy();
+    G4int Z = nucleus->GetZ_asInt();
+    G4int A = nucleus->GetA_asInt();
+    fCode = 1000 * Z + A;
+    if (fVerbose > 2)
+    {
+        G4cout << "G4PhotonEvaporation::GetEmissionProbability: Z="
+               << Z << " A=" << A << " Eexc(MeV)= " << fExcEnergy << G4endl;
+    }
+    // ignore gamma de-excitation for exotic fragments
+    // and for very low excitations
+    if (0 >= Z || 1 >= A || Z == A || Tolerance >= fExcEnergy)
+    {
+        return fProbability;
+    }
+
+    // ignore gamma de-excitation for highly excited levels
+    if (A >= MAXGRDATA)
+    {
+        A = MAXGRDATA - 1;
+    }
+    // G4cout<<" GREnergy= "<< GREnergy[A]<<" GRWidth= "<<GRWidth[A]<<G4endl;
+
+    static const G4float GREfactor = 5.0f;
+    if (fExcEnergy >= (G4double)(GREfactor * GRWidth[A] + GREnergy[A]))
+    {
+        return fProbability;
+    }
+    // probability computed assuming continium transitions
+    // VI: continium transition are limited only to final states
+    //     below Fermi energy (this approach needs further evaluation)
+    G4double emax = std::max(0.0, nucleus->ComputeGroundStateMass(Z, A - 1) + CLHEP::neutron_mass_c2 - nucleus->GetGroundStateMass());
+
+    // max energy level for continues transition
+    emax = std::min(emax, fExcEnergy);
+    const G4double eexcfac = 0.99;
+    if (0.0 == emax || fExcEnergy * eexcfac <= emax)
+    {
+        emax = fExcEnergy * eexcfac;
+    }
+
+    fStep = emax;
+    const G4double MaxDeltaEnergy = CLHEP::MeV;
+    fPoints = std::min((G4int)(fStep / MaxDeltaEnergy) + 2, MAXDEPOINT);
+    fStep /= ((G4double)(fPoints - 1));
+    if (fVerbose > 2)
+    {
+        G4cout << "Emax= " << emax << " Npoints= " << fPoints
+               << "  Eex= " << fExcEnergy << G4endl;
+    }
+    // integrate probabilities
+    G4double eres = (G4double)GREnergy[A];
+    G4double wres = (G4double)GRWidth[A];
+    G4double eres2 = eres * eres;
+    G4double wres2 = wres * wres;
+    G4double levelDensity = fNuclearLevelData->GetLevelDensity(Z, A, fExcEnergy);
+    G4double xsqr = std::sqrt(levelDensity * fExcEnergy);
+
+    G4double egam = fExcEnergy;
+    G4double gammaE2 = egam * egam;
+    G4double gammaR2 = gammaE2 * wres2;
+    G4double egdp2 = gammaE2 - eres2;
+
+    G4double p0 = G4Exp(-2.0 * xsqr) * gammaR2 * gammaE2 / (egdp2 * egdp2 + gammaR2);
+    G4double p1(0.0);
+
+    for (G4int i = 1; i < fPoints; ++i)
+    {
+        egam -= fStep;
+        gammaE2 = egam * egam;
+        gammaR2 = gammaE2 * wres2;
+        egdp2 = gammaE2 - eres2;
+        p1 = G4Exp(2.0 * (std::sqrt(levelDensity * std::abs(fExcEnergy - egam)) - xsqr)) * gammaR2 * gammaE2 / (egdp2 * egdp2 + gammaR2);
+        fProbability += (p1 + p0);
+        fCummProbability[i] = fProbability;
+        if (fVerbose > 3)
+        {
+            G4cout << "Egamma= " << egam << "  Eex= " << fExcEnergy
+                   << "  p0= " << p0 << " p1= " << p1 << " sum= "
+                   << fCummProbability[i] << G4endl;
+        }
+        p0 = p1;
+    }
+
+    static const G4double NormC = 1.25 * CLHEP::millibarn / (CLHEP::pi2 * CLHEP::hbarc * CLHEP::hbarc);
+    fProbability *= fStep * NormC * A;
+    if (fVerbose > 1)
+    {
+        G4cout << "prob= " << fProbability << G4endl;
+    }
+    return fProbability;
 }
