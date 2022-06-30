@@ -69,13 +69,6 @@ public:
   // two-photon emission
   virtual G4FragmentVector *EmittedFragments(G4Fragment *theNucleus) final;
 
-  // returns "false", emitted gamma and e- are added to the results
-  virtual G4bool
-  BreakUpChain(G4FragmentVector *theResult, G4Fragment *theNucleus) final;
-
-  // emitted gamma, e-, and residual fragment are added to the results
-  G4FragmentVector *BreakItUp(const G4Fragment &theNucleus);
-
   // compute emission probability for both continum and discrete cases
   // must be called before any method above
   virtual G4double GetEmissionProbability(G4Fragment *theNucleus) final;
@@ -97,8 +90,6 @@ public:
   inline G4int GetVacantShellNumber() const;
 
 private:
-  void InitialiseGRData();
-
   G4FragmentVector *GenerateGammas(G4Fragment *nucleus);
 
   void SetUpEnergySpectrumSampler(G4double transitionEnergy);
@@ -122,7 +113,6 @@ private:
   G4int theA;
   G4int fPoints;
   G4int fCode;
-  G4int vShellNumber;
   size_t fIndex;
 
   static G4float GREnergy[MAXGRDATA];
@@ -136,7 +126,6 @@ private:
   G4double fStep;
   G4double fMaxLifeTime;
 
-  G4double LevelDensity;
   G4double Tolerance;
 
   G4float fMultipoleMixing;
@@ -144,7 +133,6 @@ private:
 
   G4bool fRDM;
   G4bool fSampleTime;
-  G4bool fCorrelatedGamma;
   G4bool isInitialised;
 
   G4RandGeneral *energySpectrumSampler;
@@ -182,11 +170,6 @@ G4TwoPhotonEvaporation::InitialiseLevelManager(G4int Z, G4int A)
     fLevelManager = fNuclearLevelData->GetLevelManager(theZ, theA);
     fLevelEnergyMax = fLevelManager ? fLevelManager->MaxLevelEnergy() : 0.0;
   }
-}
-
-inline G4int G4TwoPhotonEvaporation::GetVacantShellNumber() const
-{
-  return vShellNumber;
 }
 
 #endif

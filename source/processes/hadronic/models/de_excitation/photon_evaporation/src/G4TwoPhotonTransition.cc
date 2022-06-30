@@ -46,7 +46,7 @@
 #include "G4PhysicalConstants.hh"
 
 G4TwoPhotonTransition::G4TwoPhotonTransition()
-    : polarFlag(false), fDim(3), fDirectionPhoton1(0., 0., 0.), fDirectionPhoton2(0., 0., 0.), fVerbose(0)
+    : fDim(3), fDirectionPhoton1(0., 0., 0.), fDirectionPhoton2(0., 0., 0.), fVerbose(0)
 {
   fRotationMatrix.resize(fDim, std::vector<G4double>(fDim, 0.));
 }

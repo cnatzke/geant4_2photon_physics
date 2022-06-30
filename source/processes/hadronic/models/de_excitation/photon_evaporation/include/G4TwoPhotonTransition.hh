@@ -63,8 +63,6 @@ public:
 
   virtual void SampleDirection();
 
-  inline void SetPolarizationFlag(G4bool val) { polarFlag = val; };
-
   inline void SetVerbose(G4int val)
   {
     fVerbose = val;
