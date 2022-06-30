@@ -50,9 +50,6 @@
 #include "G4Threading.hh"
 #include "Randomize.hh"
 
-// const G4int MAXDEPOINT = 10;
-// const G4int MAXGRDATA  = 300;
-
 class G4TwoPhotonTransition;
 class G4NuclearPolarizationStore;
 

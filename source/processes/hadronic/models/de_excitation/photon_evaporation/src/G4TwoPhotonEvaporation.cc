@@ -50,6 +50,9 @@
 #include <CLHEP/Units/SystemOfUnits.h>
 #include <CLHEP/Units/PhysicalConstants.h>
 
+G4float G4TwoPhotonEvaporation::GREnergy[] = {0.0f};
+G4float G4TwoPhotonEvaporation::GRWidth[] = {0.0f};
+
 #ifdef G4MULTITHREADED
 G4Mutex G4TwoPhotonEvaporation::PhotonEvaporationMutex = G4MUTEX_INITIALIZER;
 #endif
