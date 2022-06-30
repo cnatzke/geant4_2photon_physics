@@ -59,7 +59,7 @@ G4Mutex G4TwoPhotonEvaporation::PhotonEvaporationMutex = G4MUTEX_INITIALIZER;
 
 G4TwoPhotonEvaporation::G4TwoPhotonEvaporation(G4TwoPhotonTransition *p)
     : fLevelManager(nullptr), fTransition(p), fPolarization(nullptr),
-      fVerbose(1), fPoints(0), vShellNumber(-1), fIndex(0),
+      fVerbose(0), fPoints(0), vShellNumber(-1), fIndex(0),
       fMaxLifeTime(DBL_MAX), fRDM(false), fSampleTime(true),
       fCorrelatedGamma(false), isInitialised(false)
 {
@@ -541,6 +541,7 @@ G4TwoPhotonEvaporation::GenerateGammas(G4Fragment *nucleus)
         G4cout << "----------------> TWO PHOTON DECAY <---------------" << G4endl;
         // G4cout << "gamma energies: " << eGamma1 / CLHEP::keV << " | " << eGamma2 / CLHEP::keV << G4endl;
         G4cout << "total energy: " << eTransTotal / CLHEP::keV << G4endl;
+        G4cout << "fVerbose : " << fVerbose << G4endl;
         G4cout << G4endl;
     }
 

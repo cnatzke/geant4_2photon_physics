@@ -92,7 +92,7 @@ G4DecayProducts *G4TwoPhotonDecay::DecayIt(G4double)
     // Let G4TwoPhotonEvaporation do the decay
     G4Fragment parentNucleus(parentA, parentZ, atRest);
 
-    twoPhotonEvaporation->SetVerboseLevel(2);
+    // twoPhotonEvaporation->SetVerboseLevel(2);
     twoPhotonEvaporation->SetMultipoleMixingRatio(multipoleMixing);
     twoPhotonEvaporation->SetAngularRatio(angularRatio);
     G4FragmentVector *emittedGammas = twoPhotonEvaporation->EmittedFragments(&parentNucleus);
