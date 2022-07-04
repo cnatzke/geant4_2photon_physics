@@ -50,8 +50,8 @@
 #include <CLHEP/Units/SystemOfUnits.h>
 #include <CLHEP/Units/PhysicalConstants.h>
 
-G4float G4TwoPhotonEvaporation::GREnergy[] = {0.0f};
-G4float G4TwoPhotonEvaporation::GRWidth[] = {0.0f};
+G4float G4TwoPhotonEvaporation::GREnergy2G[] = {0.0f};
+G4float G4TwoPhotonEvaporation::GRWidth2G[] = {0.0f};
 
 #ifdef G4MULTITHREADED
 G4Mutex G4TwoPhotonEvaporation::PhotonEvaporationMutex = G4MUTEX_INITIALIZER;
@@ -75,9 +75,13 @@ G4TwoPhotonEvaporation::G4TwoPhotonEvaporation(G4TwoPhotonTransition *p)
     theA = theZ = fCode = 0;
     fLevelEnergyMax = fStep = fExcEnergy = fProbability = 0.0;
 
-    for (G4int i = 0; i < MAXDEPOINT; ++i)
+    for (G4int i = 0; i < MAXDEPOINT2G; ++i)
     {
         fCummProbability[i] = 0.0;
+    }
+    if (0.0f == GREnergy2G[1])
+    {
+        InitialiseGRData();
     }
 }
 
@@ -103,6 +107,26 @@ void G4TwoPhotonEvaporation::Initialise()
     fMaxLifeTime = param->GetMaxLifeTime();
 
     fTransition->SetVerbose(fVerbose);
+}
+
+void G4TwoPhotonEvaporation::InitialiseGRData()
+{
+#ifdef G4MULTITHREADED
+    G4MUTEXLOCK(&G4PhotonEvaporation::PhotonEvaporationMutex);
+#endif
+    if (0.0f == GREnergy2G[1])
+    {
+        G4Pow *g4calc = G4Pow::GetInstance();
+        const G4float GRWfactor = 0.3f;
+        for (G4int A = 1; A < MAXGRDATA2G; ++A)
+        {
+            GREnergy2G[A] = (G4float)(40.3 * CLHEP::MeV / g4calc->powZ(A, 0.2));
+            GRWidth2G[A] = GRWfactor * GREnergy2G[A];
+        }
+    }
+#ifdef G4MULTITHREADED
+    G4MUTEXUNLOCK(&G4PhotonEvaporation::PhotonEvaporationMutex);
+#endif
 }
 
 G4FragmentVector *
@@ -425,14 +449,14 @@ G4TwoPhotonEvaporation::GetEmissionProbability(G4Fragment *nucleus)
     }
 
     // ignore gamma de-excitation for highly excited levels
-    if (A >= MAXGRDATA)
+    if (A >= MAXGRDATA2G)
     {
-        A = MAXGRDATA - 1;
+        A = MAXGRDATA2G - 1;
     }
-    // G4cout<<" GREnergy= "<< GREnergy[A]<<" GRWidth= "<<GRWidth[A]<<G4endl;
+    // G4cout<<" GREnergy2G= "<< GREnergy2G[A]<<" GRWidth2G= "<<GRWidth2G[A]<<G4endl;
 
     static const G4float GREfactor = 5.0f;
-    if (fExcEnergy >= (G4double)(GREfactor * GRWidth[A] + GREnergy[A]))
+    if (fExcEnergy >= (G4double)(GREfactor * GRWidth2G[A] + GREnergy2G[A]))
     {
         return fProbability;
     }
@@ -451,7 +475,7 @@ G4TwoPhotonEvaporation::GetEmissionProbability(G4Fragment *nucleus)
 
     fStep = emax;
     const G4double MaxDeltaEnergy = CLHEP::MeV;
-    fPoints = std::min((G4int)(fStep / MaxDeltaEnergy) + 2, MAXDEPOINT);
+    fPoints = std::min((G4int)(fStep / MaxDeltaEnergy) + 2, MAXDEPOINT2G);
     fStep /= ((G4double)(fPoints - 1));
     if (fVerbose > 2)
     {
@@ -459,8 +483,8 @@ G4TwoPhotonEvaporation::GetEmissionProbability(G4Fragment *nucleus)
                << "  Eex= " << fExcEnergy << G4endl;
     }
     // integrate probabilities
-    G4double eres = (G4double)GREnergy[A];
-    G4double wres = (G4double)GRWidth[A];
+    G4double eres = (G4double)GREnergy2G[A];
+    G4double wres = (G4double)GRWidth2G[A];
     G4double eres2 = eres * eres;
     G4double wres2 = wres * wres;
     G4double levelDensity = fNuclearLevelData->GetLevelDensity(Z, A, fExcEnergy);

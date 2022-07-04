@@ -43,7 +43,6 @@
 
 #include "globals.hh"
 #include "G4VEvaporationChannel.hh"
-#include "G4PhotonEvaporation.hh"
 #include "G4NuclearLevelData.hh"
 #include "G4LevelManager.hh"
 #include "G4Fragment.hh"
@@ -52,6 +51,9 @@
 
 class G4TwoPhotonTransition;
 class G4NuclearPolarizationStore;
+
+const G4int MAXDEPOINT2G = 10;
+const G4int MAXGRDATA2G = 300;
 
 class G4TwoPhotonEvaporation : public G4VEvaporationChannel
 {
@@ -87,6 +89,8 @@ public:
   inline G4int GetVacantShellNumber() const;
 
 private:
+  void InitialiseGRData();
+
   G4FragmentVector *GenerateGammas(G4Fragment *nucleus);
 
   void SetUpEnergySpectrumSampler(G4double transitionEnergy);
@@ -112,10 +116,10 @@ private:
   G4int fCode;
   size_t fIndex;
 
-  static G4float GREnergy[MAXGRDATA];
-  static G4float GRWidth[MAXGRDATA];
+  static G4float GREnergy2G[MAXGRDATA2G];
+  static G4float GRWidth2G[MAXGRDATA2G];
 
-  G4double fCummProbability[MAXDEPOINT];
+  G4double fCummProbability[MAXDEPOINT2G];
 
   G4double fLevelEnergyMax;
   G4double fExcEnergy;
