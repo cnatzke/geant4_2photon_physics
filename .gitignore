@@ -56,6 +56,7 @@ source/processes/hadronic/models/de_excitation/gem_evaporation/
 source/processes/hadronic/models/de_excitation/handler/
 source/processes/hadronic/models/de_excitation/management/
 source/processes/hadronic/models/de_excitation/multifragmentation/
+source/processes/hadronic/models/de_excitation/photon_evaporation/build
 source/processes/hadronic/models/de_excitation/photon_evaporation/CMakeLists.txt
 source/processes/hadronic/models/de_excitation/photon_evaporation/GNUmakefile
 source/processes/hadronic/models/de_excitation/photon_evaporation/README-LevelGammaData
@@ -82,6 +83,7 @@ source/processes/hadronic/models/parton_string/
 source/processes/hadronic/models/pre_equilibrium/
 source/processes/hadronic/models/qmd/
 source/processes/hadronic/models/quasi_elastic/
+source/processes/hadronic/models/radioactive_decay/build
 source/processes/hadronic/models/radioactive_decay/CMakeLists.txt
 source/processes/hadronic/models/radioactive_decay/GNUmakefile
 source/processes/hadronic/models/radioactive_decay/History
