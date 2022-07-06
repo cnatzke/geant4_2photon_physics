@@ -133,7 +133,6 @@ G4RadioactiveDecayBase::G4RadioactiveDecayBase(const G4String &processName)
     // Set up two photon evaporation for use in G4TwoPhotonDecay
     twoPhotonEvaporation = new G4TwoPhotonEvaporation();
     twoPhotonEvaporation->RDMForced(true);
-    twoPhotonEvaporation->SetICM(true);
 
     // DHW G4DeexPrecoParameters* deex = G4NuclearLevelData::GetInstance()->GetParameters();
     // DHW deex->SetCorrelatedGamma(true);
@@ -951,7 +950,9 @@ G4RadioactiveDecayBase::LoadDecayTable(const G4ParticleDefinition &theParentNucl
                         case TwoPhoton:
                         {
                             // Not yet implemented
-                            G4cout << " Two-photon decay, a = " << a << ", b = " << b << ", c = " << c << G4endl;
+                            G4cout << "G4RadioactiveDecayBase::LoadDecayTable()" << G4endl;
+                            G4cout << "Warning: Make sure line length of two photon file < 72" << G4endl;
+                            break;
                         }
                         break;
                         case RDM_ERROR:
