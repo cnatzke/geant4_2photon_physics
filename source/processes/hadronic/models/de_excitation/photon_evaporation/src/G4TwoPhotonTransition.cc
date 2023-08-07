@@ -205,8 +205,6 @@ G4TwoPhotonTransition::SampleTransition(G4Fragment *nucleus,
     G4Fragment *result = new G4Fragment(res4mom, part0);
     results->push_back(result);
 
-    // G4cout << " DeltaE= " << e0 - lv.e() - res4mom.e() + emass
-    //	 << "   Emass= " << emass << G4endl;
     if (fVerbose > 2)
     {
       G4cout << "G4TwoPhotonTransition::SampleTransition : " << *result << G4endl;
