@@ -150,8 +150,6 @@ G4TwoPhotonEvaporation::EmittedFragments(G4Fragment *nucleus)
         G4cout << " RDM: " << fRDM
                << G4endl;
     }
-    fVerbose = 3;
-    G4cout << "CRN: fVerbose=" << fVerbose << G4endl;
     G4FragmentVector *gammas = GenerateGammas(nucleus);
 
     if (fVerbose > 1)
@@ -367,18 +365,19 @@ G4TwoPhotonEvaporation::GenerateGammas(G4Fragment *nucleus)
     }
 
     // Let transition class handle angular and energy distributions
-    fTransition->SetVerbose(3);
     gammas = fTransition->SampleTransition(nucleus, efinal, fMultipoleMixing, fAngularRatio, vShellNumber, isGamma, isTwoPhoton);
 
     if (gammas->size() != 0)
     {
-        std::cout << "CRN: Setting creation time for " << gammas->size() << " particles" << G4endl;
+        // std::cout << "CRN: Setting creation time for " << gammas->size() << " particles" << G4endl;
         for (auto it = 0; it < static_cast<int>(gammas->size()); ++it)
         {
             gammas->at(it)->SetCreationTime(time);
             results->push_back(gammas->at(it));
         }
     }
+
+    delete gammas;
 
     // updated residual nucleus
     nucleus->SetCreationTime(time);

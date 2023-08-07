@@ -108,8 +108,6 @@ G4TwoPhotonTransition::SampleTransition(G4Fragment *nucleus,
   G4ParticleDefinition *part0 = NULL;
   G4ParticleDefinition *part1 = NULL;
 
-  // G4cout << "CRN: " << isGamma << ", " << isTwoPhoton << G4endl;
-
   if (isGamma)
   {
     part0 = G4Gamma::Gamma();
@@ -126,10 +124,29 @@ G4TwoPhotonTransition::SampleTransition(G4Fragment *nucleus,
     nucleus->SetNumberOfElectrons(ne);
   }
 
+  G4double mass, emass, ecm;
+  G4double energy, mom;
+
+  mass = nucleus->GetGroundStateMass() + newExcEnergy;
+  emass = part0->GetPDGMass();
+
+  // 2-body decay in rest frame
+  ecm = lv.mag();
+  if (!isGamma && !isTwoPhoton)
+  {
+    ecm += (CLHEP::electron_mass_c2 - bond_energy);
+  }
+
+  ecm = std::max(ecm, mass + emass);
+  energy = 0.5 * ((ecm - mass) * (ecm + mass) + emass * emass) / ecm;
+  mom = (emass > 0.0) ? std::sqrt((energy - emass) * (energy + emass))
+                      : energy;
+
   if (isTwoPhoton)
   {
+
     // sets direction and energy sharing of decay
-    SampleEnergy(eTrans);
+    SampleEnergy(energy);
     SampleDirection();
 
     // Updated momentum calculations
@@ -144,11 +161,12 @@ G4TwoPhotonTransition::SampleTransition(G4Fragment *nucleus,
                                    fGamma1Energy * fDirectionPhoton1.z(), fGamma1Energy);
 
     // residual nucleus
-    G4double resNucleusX = -fGamma0Energy * fDirectionPhoton0.x() - fGamma1Energy * fDirectionPhoton1.x();
-    G4double resNucleusY = -fGamma0Energy * fDirectionPhoton0.y() - fGamma1Energy * fDirectionPhoton1.y();
-    G4double resNucleusZ = -fGamma0Energy * fDirectionPhoton0.z() - fGamma1Energy * fDirectionPhoton1.z();
+    energy = std::max(ecm - energy, mass);
+    G4double resNucleusX = fGamma0Energy * fDirectionPhoton0.x() + fGamma1Energy * fDirectionPhoton1.x();
+    G4double resNucleusY = fGamma0Energy * fDirectionPhoton0.y() + fGamma1Energy * fDirectionPhoton1.y();
+    G4double resNucleusZ = fGamma0Energy * fDirectionPhoton0.z() + fGamma1Energy * fDirectionPhoton1.z();
 
-    lv.set(resNucleusX, resNucleusY, resNucleusZ, fGamma0Energy + fGamma1Energy);
+    lv.set(-resNucleusX, -resNucleusY, -resNucleusZ, energy);
     // Lab system transform for short lived level
     lv.boost(bst);
 
@@ -158,44 +176,15 @@ G4TwoPhotonTransition::SampleTransition(G4Fragment *nucleus,
     photon0FourMom.boost(bst);
     photon1FourMom.boost(bst);
 
-    G4cout << "CRN : Here 3" << G4endl;
     resultGamma0 = new G4Fragment(photon0FourMom, part0);
     resultGamma1 = new G4Fragment(photon1FourMom, part1);
 
-    // G4cout << "CRN : Here 4" << G4endl;
-    // G4cout << resultsTest.size() << G4endl;
-    // resultsTest.push_back(resultGamma0);
-    // G4cout << "CRN : Here 5" << G4endl;
-    // resultsTest.push_back(resultGamma1);
-    // G4cout << "CRN : Here 6" << G4endl;
-
-    G4cout << "CRN : Here 4" << G4endl;
-    G4cout << resultGamma0 << G4endl;
-    G4cout << results->size() << G4endl;
     results->push_back(resultGamma0);
-    G4cout << "CRN : Here 5" << G4endl;
     results->push_back(resultGamma1);
-    G4cout << "CRN : Here 6" << G4endl;
   }
   else
   {
     fDirection = G4RandomDirection();
-    G4double mass = nucleus->GetGroundStateMass() + newExcEnergy;
-    G4double emass = part0->GetPDGMass();
-
-    // 2-body decay in rest frame
-    G4double ecm = lv.mag();
-    if (!isGamma)
-    {
-      ecm += (CLHEP::electron_mass_c2 - bond_energy);
-    }
-
-    // G4cout << "Ecm= " << ecm << " mass= " << mass << " emass= " << emass << G4endl;
-
-    ecm = std::max(ecm, mass + emass);
-    G4double energy = 0.5 * ((ecm - mass) * (ecm + mass) + emass * emass) / ecm;
-    G4double mom = (emass > 0.0) ? std::sqrt((energy - emass) * (energy + emass))
-                                 : energy;
 
     // emitted gamma or e-
     G4LorentzVector res4mom(mom * fDirection.x(),
@@ -227,19 +216,6 @@ G4TwoPhotonTransition::SampleTransition(G4Fragment *nucleus,
 
   return results;
 }
-
-/*
-if (fVerbose > 2)
-{
-  G4cout << "G4TwoPhotonTransition::SampleTransition() transitionEnergy= " << eTrans
-         << G4endl;
-}
-if (fVerbose > 2)
-{
-  G4cout << "G4TwoPhotonTransition::SampleTransition : " << *results << G4endl;
-  G4cout << "       Left nucleus: " << *nucleus << G4endl;
-}
-*/
 
 void G4TwoPhotonTransition::SampleEnergy(G4double transitionEnergy)
 {

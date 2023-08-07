@@ -132,7 +132,7 @@ G4RadioactiveDecayBase::G4RadioactiveDecayBase(const G4String &processName)
     photonEvaporation->SetICM(true);
     // Set up two photon evaporation for use in G4TwoPhotonDecay
     twoPhotonEvaporation = new G4TwoPhotonEvaporation();
-    twoPhotonEvaporation->SetVerboseLevel(3);
+    // twoPhotonEvaporation->SetVerboseLevel(3);
     twoPhotonEvaporation->RDMForced(true);
     twoPhotonEvaporation->SetICM(true);
 
