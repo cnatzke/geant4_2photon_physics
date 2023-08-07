@@ -84,11 +84,9 @@ public:
 
   inline void SetVerboseLevel(G4int verbose);
 
-  inline void SetMultipoleMixingRatio(G4double multipoleMixing);
+  inline void SetMultipoleMixingRatio(G4float multipoleMixing);
 
-  inline void SetAngularRatio(G4double angularRatio);
-
-  inline void SetRelativeBR(G4double branchingRatio);
+  inline void SetAngularRatio(G4float angularRatio);
 
   inline G4int GetVacantShellNumber() const;
 
@@ -111,11 +109,10 @@ private:
   G4int theA;
   G4int fPoints;
   G4int fCode;
-  G4int vShellNumber;
   size_t fIndex;
 
-  static G4float GREnergy[MAXGRDATA2G];
-  static G4float GRWidth[MAXGRDATA2G];
+  static G4float GREnergy2G[MAXGRDATA2G];
+  static G4float GRWidth2G[MAXGRDATA2G];
 
   G4double fCummProbability[MAXDEPOINT2G];
 
@@ -134,6 +131,7 @@ private:
   G4bool fRDM;
   G4bool fSampleTime;
   G4bool fIsomerFlag;
+  G4bool fTwoPhotonTransition;
   G4bool isInitialised;
 
 #ifdef G4MULTITHREADED
@@ -147,19 +145,19 @@ inline void G4TwoPhotonEvaporation::SetVerboseLevel(G4int verbose)
 }
 
 inline void
-G4TwoPhotonEvaporation::SetMultipoleMixingRatio(G4double multipoleMixing)
+G4TwoPhotonEvaporation::SetMultipoleMixingRatio(G4float multipoleMixing)
 {
   fMultipoleMixing = multipoleMixing;
 }
 
 inline void
-G4TwoPhotonEvaporation::SetAngularRatio(G4double angularRatio)
+G4TwoPhotonEvaporation::SetAngularRatio(G4float angularRatio)
 {
   fAngularRatio = angularRatio;
 }
 
 inline void
-G4TwoPhotonEvaporation::SetRelativeBR(G4double branchingRatio)
+G4TwoPhotonEvaporation::SetRelativeBR(G4float branchingRatio)
 {
   fRelativeBR = branchingRatio;
 }

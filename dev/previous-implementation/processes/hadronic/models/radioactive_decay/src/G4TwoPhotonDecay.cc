@@ -52,18 +52,12 @@
 #include "G4SystemOfUnits.hh"
 #include "G4PhysicalConstants.hh"
 
-// G4ITDecay::G4ITDecay(const G4ParticleDefinition *theParentNucleus,
-//                      const G4double &branch, const G4double &Qvalue,
-//                      const G4double &excitationE, G4PhotonEvaporation *aPhotoEvap)
-//     : G4NuclearDecay("IT decay", IT, excitationE, noFloat), transitionQ(Qvalue),
-//       applyARM(true), photonEvaporation(aPhotoEvap)
-// {
-
 G4TwoPhotonDecay::G4TwoPhotonDecay(const G4ParticleDefinition *theParentNucleus,
                                    const G4double &branch, const G4double &Qvalue,
-                                   const G4double &excitationE, const G4String &dataFile, G4TwoPhotonEvaporation *aPhotoEvap)
-    : G4NuclearDecay("Two-photon decay", TwoPhoton, excitationE, noFloat), transitionQ(Qvalue), twoPhotonEvaporation(aPhotoEvap), applyARM(true)
+                                   const G4double &excitationE, G4TwoPhotonEvaporation *aPhotoEvap, const G4String &dataFile)
+    : G4NuclearDecay("Two-photon decay", TwoPhoton, excitationE, noFloat), transitionQ(Qvalue), twoPhotonEvaporation(aPhotoEvap)
 {
+
     SetParent(theParentNucleus); // Store name of parent nucleus, delete G4MT_parent
     SetBR(branch);
 
@@ -98,11 +92,10 @@ G4DecayProducts *G4TwoPhotonDecay::DecayIt(G4double)
     // Let G4TwoPhotonEvaporation do the decay
     G4Fragment parentNucleus(parentA, parentZ, atRest);
 
-    // twoPhotonEvaporation->SetVerboseLevel(3);
-    twoPhotonEvaporation->SetRelativeBR(fBranchingRatio);
-    twoPhotonEvaporation->SetMultipoleMixingRatio(fMultipoleMixing);
-    twoPhotonEvaporation->SetAngularRatio(fAngularRatio);
-    G4FragmentVector *decayProducts = twoPhotonEvaporation->EmittedFragments(&parentNucleus);
+    // twoPhotonEvaporation->SetVerboseLevel(2);
+    twoPhotonEvaporation->SetMultipoleMixingRatio(multipoleMixing);
+    twoPhotonEvaporation->SetAngularRatio(angularRatio);
+    G4FragmentVector *emittedGammas = twoPhotonEvaporation->EmittedFragments(&parentNucleus);
 
     // Modified nuclide is returned as dynDaughter
     G4IonTable *theIonTable =
@@ -114,95 +107,15 @@ G4DecayProducts *G4TwoPhotonDecay::DecayIt(G4double)
                                                            parentNucleus.GetMomentum());
 
     // Write gammas to products vector
-    if (decayProducts)
+    if (emittedGammas)
     {
-        if (decayProducts->size() == 2)
+        for (size_t i = 0; i < emittedGammas->size(); i++)
         {
-            G4DynamicParticle *gamma0Dyn =
-                new G4DynamicParticle(decayProducts->at(0)->GetParticleDefinition(),
-                                      decayProducts->at(0)->GetMomentum());
-            gamma0Dyn->SetProperTime(decayProducts->at(0)->GetCreationTime());
-            products->PushProducts(gamma0Dyn);
-
-            G4DynamicParticle *gamma1Dyn =
-                new G4DynamicParticle(decayProducts->at(1)->GetParticleDefinition(),
-                                      decayProducts->at(1)->GetMomentum());
-            gamma1Dyn->SetProperTime(decayProducts->at(1)->GetCreationTime());
-            products->PushProducts(gamma1Dyn);
-
-            delete decayProducts;
+            G4DynamicParticle *emittedGammaDyn = new G4DynamicParticle(emittedGammas->at(i)->GetParticleDefinition(), emittedGammas->at(i)->GetMomentum());
+            emittedGammaDyn->SetProperTime(emittedGammas->at(i)->GetCreationTime());
+            products->PushProducts(emittedGammaDyn);
         }
-        else
-        {
-            G4DynamicParticle *eOrGammaDyn =
-                new G4DynamicParticle(decayProducts->at(0)->GetParticleDefinition(),
-                                      decayProducts->at(0)->GetMomentum());
-            eOrGammaDyn->SetProperTime(decayProducts->at(0)->GetCreationTime());
-            products->PushProducts(eOrGammaDyn);
-            delete decayProducts;
-
-            // Now do atomic relaxation if e- is emitted
-            if (applyARM)
-            {
-                G4int shellIndex = twoPhotonEvaporation->GetVacantShellNumber();
-                if (shellIndex > -1)
-                {
-                    G4VAtomDeexcitation *atomDeex =
-                        G4LossTableManager::Instance()->AtomDeexcitation();
-                    if (atomDeex->IsFluoActive() && parentZ > 5 && parentZ < 100)
-                    {
-                        G4int nShells = G4AtomicShells::GetNumberOfShells(parentZ);
-                        if (shellIndex >= nShells)
-                            shellIndex = nShells;
-                        G4AtomicShellEnumerator as = G4AtomicShellEnumerator(shellIndex);
-                        const G4AtomicShell *shell = atomDeex->GetAtomicShell(parentZ, as);
-                        std::vector<G4DynamicParticle *> armProducts;
-
-                        // VI, SI
-                        // Allows fixing of Bugzilla 1727
-                        G4double deexLimit = 0.1 * keV;
-                        if (G4EmParameters::Instance()->DeexcitationIgnoreCut())
-                            deexLimit = 0.;
-                        //
-
-                        atomDeex->GenerateParticles(&armProducts, shell, parentZ, deexLimit,
-                                                    deexLimit);
-                        G4double productEnergy = 0.;
-                        for (G4int i = 0; i < G4int(armProducts.size()); i++)
-                            productEnergy += armProducts[i]->GetKineticEnergy();
-
-                        G4double deficit = shell->BindingEnergy() - productEnergy;
-                        if (deficit > 0.0)
-                        {
-                            // Add a dummy electron to make up extra energy
-                            G4double cosTh = 1. - 2. * G4UniformRand();
-                            G4double sinTh = std::sqrt(1. - cosTh * cosTh);
-                            G4double phi = twopi * G4UniformRand();
-
-                            G4ThreeVector electronDirection(sinTh * std::sin(phi),
-                                                            sinTh * std::cos(phi), cosTh);
-                            G4DynamicParticle *extra =
-                                new G4DynamicParticle(G4Electron::Electron(), electronDirection,
-                                                      deficit);
-                            armProducts.push_back(extra);
-                        }
-
-                        G4int nArm = armProducts.size();
-                        if (nArm > 0)
-                        {
-                            G4ThreeVector bst = dynDaughter->Get4Momentum().boostVector();
-                            for (G4int i = 0; i < nArm; ++i)
-                            {
-                                G4DynamicParticle *dp = armProducts[i];
-                                G4LorentzVector lv = dp->Get4Momentum().boost(bst);
-                                dp->Set4Momentum(lv);
-                                products->PushProducts(dp);
-                            }
-                        }
-                    }
-                }
-            } // if ARM on
-        }     // end gamma/IC decay
+        delete emittedGammas;
     }
 
     products->PushProducts(dynDaughter);
@@ -250,14 +163,14 @@ void G4TwoPhotonDecay::ReadInTwoPhotonParameters(G4int Z, G4int A, const G4Strin
         {
             std::istringstream sstr(line);
 
-            sstr >> fLevelIndex >> fLevelEnergy >> fBranchingRatio >> fMultipoleMixing >> fAngularRatio;
+            sstr >> levelIndex >> energy >> multipoleMixing >> angularRatio;
 
             if (fVerbose > 1)
             {
-                G4cout << "fLevelIndex " << fLevelIndex
-                       << " | fLevelEnergy " << fLevelEnergy
-                       << " | fMultipoleMixing " << fMultipoleMixing
-                       << " | fAngularRatio " << fAngularRatio
+                G4cout << "levelIndex " << levelIndex
+                       << " | energy " << energy
+                       << " | multipoleMixing " << multipoleMixing
+                       << " | angularRatio " << angularRatio
                        << G4endl;
             }
         }

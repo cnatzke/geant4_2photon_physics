@@ -192,15 +192,14 @@ G4RadioactiveDecay::G4RadioactiveDecay(const G4String &processName)
 
     // Set up photon evaporation for use in G4ITDecay
     photonEvaporation = new G4PhotonEvaporation();
-    // photonEvaporation->SetVerboseLevel(3);
+    // photonEvaporation->SetVerboseLevel(2);
     photonEvaporation->RDMForced(true);
     photonEvaporation->SetICM(true);
 
     // Set up photon evaporation for use in G4TwoPhotonDecay
     twoPhotonEvaporation = new G4TwoPhotonEvaporation();
-    twoPhotonEvaporation->SetVerboseLevel(3);
+    twoPhotonEvaporation->SetVerboseLevel(0);
     twoPhotonEvaporation->RDMForced(true);
-    twoPhotonEvaporation->SetICM(true);
 
     // Check data directory
     char *path_var = std::getenv("G4RADIOACTIVEDATA");
@@ -1066,7 +1065,7 @@ G4RadioactiveDecay::LoadDecayTable(const G4ParticleDefinition &theParentNucleus)
 
                             if (TwoPhotonDataFile.good())
                             {
-                                G4TwoPhotonDecay *aTwoPhotonChannel = new G4TwoPhotonDecay(&theParentNucleus, decayModeTotal, 0.0, 0.0, twoPhotonFile, twoPhotonEvaporation);
+                                G4TwoPhotonDecay *aTwoPhotonChannel = new G4TwoPhotonDecay(&theParentNucleus, decayModeTotal, 0.0, 0.0, twoPhotonEvaporation, twoPhotonFile);
                                 aTwoPhotonChannel->SetHLThreshold(halflifethreshold);
                                 theDecayTable->Insert(aTwoPhotonChannel);
                                 // aTwoPhotonChannel->DumpNuclearInfo();

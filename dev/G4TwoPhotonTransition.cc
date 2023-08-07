@@ -38,7 +38,6 @@
 #include "G4TwoPhotonTransition.hh"
 #include "Randomize.hh"
 #include "G4RandomDirection.hh"
-#include "G4AtomicShells.hh"
 #include "G4Gamma.hh"
 #include "G4Electron.hh"
 #include "G4LorentzVector.hh"
@@ -68,7 +67,7 @@ G4TwoPhotonTransition::SampleTransition(G4Fragment *nucleus,
   fAngularRatio = angularRatio;
   G4Fragment *resultGamma0 = nullptr;
   G4Fragment *resultGamma1 = nullptr;
-  G4FragmentVector *results = new G4FragmentVector();
+  G4FragmentVector *results;
   G4double bond_energy = 0.0;
 
   if (!isGamma)
@@ -105,10 +104,8 @@ G4TwoPhotonTransition::SampleTransition(G4Fragment *nucleus,
   G4ThreeVector bst = lv.boostVector();
 
   // select secondaries
-  G4ParticleDefinition *part0 = NULL;
-  G4ParticleDefinition *part1 = NULL;
-
-  // G4cout << "CRN: " << isGamma << ", " << isTwoPhoton << G4endl;
+  G4ParticleDefinition *part0;
+  G4ParticleDefinition *part1;
 
   if (isGamma)
   {
@@ -132,6 +129,8 @@ G4TwoPhotonTransition::SampleTransition(G4Fragment *nucleus,
     SampleEnergy(eTrans);
     SampleDirection();
 
+    G4ThreeVector bst = lv.boostVector();
+
     // Updated momentum calculations
     // first photon 4-vector
     G4LorentzVector photon0FourMom(fGamma0Energy * fDirectionPhoton0.x(),
@@ -148,7 +147,7 @@ G4TwoPhotonTransition::SampleTransition(G4Fragment *nucleus,
     G4double resNucleusY = -fGamma0Energy * fDirectionPhoton0.y() - fGamma1Energy * fDirectionPhoton1.y();
     G4double resNucleusZ = -fGamma0Energy * fDirectionPhoton0.z() - fGamma1Energy * fDirectionPhoton1.z();
 
-    lv.set(resNucleusX, resNucleusY, resNucleusZ, fGamma0Energy + fGamma1Energy);
+    lv.set(resNucleusX, resNucleusY, resNucleusZ, photon0Energy + photon1Energy);
     // Lab system transform for short lived level
     lv.boost(bst);
 
@@ -158,24 +157,11 @@ G4TwoPhotonTransition::SampleTransition(G4Fragment *nucleus,
     photon0FourMom.boost(bst);
     photon1FourMom.boost(bst);
 
-    G4cout << "CRN : Here 3" << G4endl;
     resultGamma0 = new G4Fragment(photon0FourMom, part0);
     resultGamma1 = new G4Fragment(photon1FourMom, part1);
 
-    // G4cout << "CRN : Here 4" << G4endl;
-    // G4cout << resultsTest.size() << G4endl;
-    // resultsTest.push_back(resultGamma0);
-    // G4cout << "CRN : Here 5" << G4endl;
-    // resultsTest.push_back(resultGamma1);
-    // G4cout << "CRN : Here 6" << G4endl;
-
-    G4cout << "CRN : Here 4" << G4endl;
-    G4cout << resultGamma0 << G4endl;
-    G4cout << results->size() << G4endl;
     results->push_back(resultGamma0);
-    G4cout << "CRN : Here 5" << G4endl;
     results->push_back(resultGamma1);
-    G4cout << "CRN : Here 6" << G4endl;
   }
   else
   {
@@ -185,6 +171,7 @@ G4TwoPhotonTransition::SampleTransition(G4Fragment *nucleus,
 
     // 2-body decay in rest frame
     G4double ecm = lv.mag();
+    G4ThreeVector bst = lv.boostVector();
     if (!isGamma)
     {
       ecm += (CLHEP::electron_mass_c2 - bond_energy);
@@ -250,13 +237,13 @@ void G4TwoPhotonTransition::SampleEnergy(G4double transitionEnergy)
   {
 
     fGamma0Energy = transitionEnergy * energySpectrumSampler->shoot(G4Random::getTheEngine());
-    fGamma1Energy = transitionEnergy - fGamma0Energy; // keV
+    fGamma1Energy = transitionEnergy - fGamma1Energy; // keV
 
     if (fVerbose > 2)
     {
       G4cout << "G4TwoPhotonTransition::fGamma0Energy= " << fGamma0Energy << " | "
              << "G4TwoPhotonTransition::fGamma1Energy= " << fGamma1Energy << " | "
-             << "G4TwoPhotonTransition::sumEnergy= " << fGamma0Energy + fGamma1Energy << " | "
+             << "G4TwoPhotonTransition::sumEnergy= " << fGamma0Energy + fGamma1Energy
              << "G4TwoPhotonTransition::transitionEnergy= " << transitionEnergy
              << G4endl;
     }
@@ -300,7 +287,7 @@ void G4TwoPhotonTransition::SampleDirection()
     G4ThreeVector rotatedEmissionVector = RotateVector(emissionVector);
 
     // Check the angle between vectors
-    if (fVerbose > 3)
+    if (fVerbose > 2)
     {
       G4cout << "###### Angle SANITY CHECK ######" << G4endl;
       G4cout << "Theta: " << theta2 << " | Angle: " << polarizationAxis.angle(rotatedEmissionVector) << G4endl;

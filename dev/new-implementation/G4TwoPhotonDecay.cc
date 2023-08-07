@@ -52,18 +52,12 @@
 #include "G4SystemOfUnits.hh"
 #include "G4PhysicalConstants.hh"
 
-// G4ITDecay::G4ITDecay(const G4ParticleDefinition *theParentNucleus,
-//                      const G4double &branch, const G4double &Qvalue,
-//                      const G4double &excitationE, G4PhotonEvaporation *aPhotoEvap)
-//     : G4NuclearDecay("IT decay", IT, excitationE, noFloat), transitionQ(Qvalue),
-//       applyARM(true), photonEvaporation(aPhotoEvap)
-// {
-
 G4TwoPhotonDecay::G4TwoPhotonDecay(const G4ParticleDefinition *theParentNucleus,
                                    const G4double &branch, const G4double &Qvalue,
-                                   const G4double &excitationE, const G4String &dataFile, G4TwoPhotonEvaporation *aPhotoEvap)
-    : G4NuclearDecay("Two-photon decay", TwoPhoton, excitationE, noFloat), transitionQ(Qvalue), twoPhotonEvaporation(aPhotoEvap), applyARM(true)
+                                   const G4double &excitationE, G4TwoPhotonEvaporation *aPhotoEvap, const G4String &dataFile)
+    : G4NuclearDecay("Two-photon decay", TwoPhoton, excitationE, noFloat), transitionQ(Qvalue), applyARM(true), twoPhotonEvaporation(aPhotoEvap)
 {
+
     SetParent(theParentNucleus); // Store name of parent nucleus, delete G4MT_parent
     SetBR(branch);
 
@@ -98,7 +92,7 @@ G4DecayProducts *G4TwoPhotonDecay::DecayIt(G4double)
     // Let G4TwoPhotonEvaporation do the decay
     G4Fragment parentNucleus(parentA, parentZ, atRest);
 
-    // twoPhotonEvaporation->SetVerboseLevel(3);
+    // twoPhotonEvaporation->SetVerboseLevel(2);
     twoPhotonEvaporation->SetRelativeBR(fBranchingRatio);
     twoPhotonEvaporation->SetMultipoleMixingRatio(fMultipoleMixing);
     twoPhotonEvaporation->SetAngularRatio(fAngularRatio);
@@ -116,7 +110,7 @@ G4DecayProducts *G4TwoPhotonDecay::DecayIt(G4double)
     // Write gammas to products vector
     if (decayProducts)
     {
-        if (decayProducts->size() == 2)
+        if (G4DecayProducts->size() == 2)
         {
             G4DynamicParticle *gamma0Dyn =
                 new G4DynamicParticle(decayProducts->at(0)->GetParticleDefinition(),
@@ -135,9 +129,9 @@ G4DecayProducts *G4TwoPhotonDecay::DecayIt(G4double)
         else
         {
             G4DynamicParticle *eOrGammaDyn =
-                new G4DynamicParticle(decayProducts->at(0)->GetParticleDefinition(),
-                                      decayProducts->at(0)->GetMomentum());
-            eOrGammaDyn->SetProperTime(decayProducts->at(0)->GetCreationTime());
+                new G4DynamicParticle(decayProducts.at(0)->GetParticleDefinition(),
+                                      decayProducts.at(0)->GetMomentum());
+            eOrGammaDyn->SetProperTime(decayProducts.at(0)->GetCreationTime());
             products->PushProducts(eOrGammaDyn);
             delete decayProducts;
 
@@ -250,7 +244,7 @@ void G4TwoPhotonDecay::ReadInTwoPhotonParameters(G4int Z, G4int A, const G4Strin
         {
             std::istringstream sstr(line);
 
-            sstr >> fLevelIndex >> fLevelEnergy >> fBranchingRatio >> fMultipoleMixing >> fAngularRatio;
+            sstr >> fLevelIndex >> fLevelEnergy >> branchingRatio >> fMultipoleMixing >> fAngularRatio;
 
             if (fVerbose > 1)
             {

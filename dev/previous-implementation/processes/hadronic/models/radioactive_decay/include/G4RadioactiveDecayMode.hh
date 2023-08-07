@@ -23,58 +23,53 @@
 // * acceptance of all terms of the Geant4 Software license.          *
 // ********************************************************************
 //
+#ifndef G4RadioactiveDecayMode_h
+#define G4RadioactiveDecayMode_h 1
+// %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+//
+// MODULE:              RadioactiveDecayMode.hh
+//
+// Version:             0.b.4
+// Date:                14/04/00
+// Author:              F Lei & P R Truscott
+// Organisation:        DERA UK
+// Customer:            ESA/ESTEC, NOORDWIJK
+// Contract:            12115/96/JG/NL Work Order No. 3
+//
+// %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+//
+// DESCRIPTION
+// -----------
+//
+// Identifies a type G4RadioactiveDecayMode to assign a specific decay mode
+// description to decay channels.
+//
+// %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+//
+// CHANGE HISTORY
+// --------------
+//
+// 29 February 2000, P R Truscott, DERA UK
+// 0.b.3 release.
+//
+// 13 April 2000, F Lei, DERA UK
+// 0.b.4 release. No change to this file
+//
+// 13 October 2015 L.G Sarmiento included different decay modes in the enum
+//
+// %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 ////////////////////////////////////////////////////////////////////////////////
-//                                                                            //
-//  File:   G4TwoPhotonDecay.hh                                               //
-//  Author: C. Natzke                                                         //
-//  Based on file: G4TwoPhotonDecay.hh                                        //
-//  Date:  2022-04-19                                                         //
-//  Description: performs isomeric transition for excited states of           //
-//               radioactive nuclei by emitting two gammas                    //
-//               and returns daughter particles the rest frame                //
-//               of the parent nucleus                                        //
-//                                                                            //
+//
+#include "globals.hh"
 ////////////////////////////////////////////////////////////////////////////////
+//
+enum G4RadioactiveDecayMode
+  {RDM_ERROR=-1, IT=0, BetaMinus=1, BetaPlus=2, KshellEC=3, LshellEC=4,
+   MshellEC=5, NshellEC=6, Alpha=7, Proton=8, Neutron=9, SpFission=10,
+   BDProton=11, BDNeutron=12, Beta2Minus=13, Beta2Plus=14, Proton2=15,
+   Neutron2=16, Triton=17, TwoPhoton=18};
 
-#ifndef G4TwoPhotonDecay_h
-#define G4TwoPhotonDecay_h 1
+std::istream &operator >> (std::istream &s, G4RadioactiveDecayMode &q);
 
-#include "G4NuclearDecay.hh"
-#include "G4Fragment.hh"
-
-class G4TwoPhotonEvaporation;
-
-class G4TwoPhotonDecay : public G4NuclearDecay
-{
-public:
-    G4TwoPhotonDecay(const G4ParticleDefinition *theParentNucleus,
-                     const G4double &theBR, const G4double &Qvalue,
-                     const G4double &excitation, const G4String &dataFile, G4TwoPhotonEvaporation *aPhotonEvap);
-
-    virtual ~G4TwoPhotonDecay();
-
-    virtual G4DecayProducts *DecayIt(G4double);
-
-    void ReadInTwoPhotonParameters(G4int Z, G4int A, const G4String &filename);
-
-    virtual void DumpNuclearInfo();
-
-private:
-    const G4double transitionQ;
-
-    G4TwoPhotonEvaporation *twoPhotonEvaporation;
-
-    G4int parentZ;
-    G4int parentA;
-    G4bool applyARM;
-    G4int fVerbose;
-    G4int fLevelIndex;
-
-    G4double fBranchingRatio;
-    G4double fMultipoleMixing;
-    G4double fAngularRatio;
-
-    G4double fLevelEnergy;
-};
-
+////////////////////////////////////////////////////////////////////////////////
 #endif

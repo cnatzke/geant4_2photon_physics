@@ -49,7 +49,7 @@ class G4TwoPhotonDecay : public G4NuclearDecay
 public:
     G4TwoPhotonDecay(const G4ParticleDefinition *theParentNucleus,
                      const G4double &theBR, const G4double &Qvalue,
-                     const G4double &excitation, const G4String &dataFile, G4TwoPhotonEvaporation *aPhotonEvap);
+                     const G4double &excitation, G4TwoPhotonEvaporation *aPhotonEvap, const G4String &dataFile);
 
     virtual ~G4TwoPhotonDecay();
 
@@ -66,15 +66,13 @@ private:
 
     G4int parentZ;
     G4int parentA;
-    G4bool applyARM;
     G4int fVerbose;
-    G4int fLevelIndex;
+    G4int levelIndex;
 
-    G4double fBranchingRatio;
-    G4double fMultipoleMixing;
-    G4double fAngularRatio;
+    G4float multipoleMixing;
+    G4float angularRatio;
 
-    G4double fLevelEnergy;
+    G4double energy;
 };
 
 #endif

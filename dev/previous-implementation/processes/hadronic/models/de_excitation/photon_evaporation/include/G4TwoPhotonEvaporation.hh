@@ -46,14 +46,14 @@
 #include "G4NuclearLevelData.hh"
 #include "G4LevelManager.hh"
 #include "G4Fragment.hh"
-#include "G4FragmentVector.hh"
 #include "G4Threading.hh"
 #include "Randomize.hh"
 
+class G4TwoPhotonTransition;
+class G4NuclearPolarizationStore;
+
 const G4int MAXDEPOINT2G = 10;
 const G4int MAXGRDATA2G = 300;
-
-class G4TwoPhotonTransition;
 
 class G4TwoPhotonEvaporation : public G4VEvaporationChannel
 {
@@ -78,44 +78,46 @@ public:
 
   void SetTwoPhotonTransition(G4TwoPhotonTransition *);
 
-  virtual void SetICM(G4bool);
-
   virtual void RDMForced(G4bool);
 
   inline void SetVerboseLevel(G4int verbose);
 
-  inline void SetMultipoleMixingRatio(G4double multipoleMixing);
+  inline void SetMultipoleMixingRatio(G4float multipoleMixing);
 
-  inline void SetAngularRatio(G4double angularRatio);
-
-  inline void SetRelativeBR(G4double branchingRatio);
+  inline void SetAngularRatio(G4float angularRatio);
 
   inline G4int GetVacantShellNumber() const;
-
-  G4TwoPhotonEvaporation(const G4TwoPhotonEvaporation &right) = delete;
-  const G4TwoPhotonEvaporation &operator=(const G4TwoPhotonEvaporation &right) = delete;
 
 private:
   void InitialiseGRData();
 
   G4FragmentVector *GenerateGammas(G4Fragment *nucleus);
 
+  void SetUpEnergySpectrumSampler(G4double transitionEnergy);
+
   inline void InitialiseLevelManager(G4int Z, G4int A);
+
+  G4TwoPhotonEvaporation(const G4TwoPhotonEvaporation &right) = delete;
+  const G4TwoPhotonEvaporation &operator=(const G4TwoPhotonEvaporation &right) = delete;
 
   G4NuclearLevelData *fNuclearLevelData;
   const G4LevelManager *fLevelManager;
   G4TwoPhotonTransition *fTransition;
+  G4NuclearPolarizationStore *fNucPStore;
+
+  // fPolarization stores polarization tensor for consecutive
+  // decays of a nucleus
+  G4NuclearPolarization *fPolarization;
 
   G4int fVerbose;
   G4int theZ;
   G4int theA;
   G4int fPoints;
   G4int fCode;
-  G4int vShellNumber;
   size_t fIndex;
 
-  static G4float GREnergy[MAXGRDATA2G];
-  static G4float GRWidth[MAXGRDATA2G];
+  static G4float GREnergy2G[MAXGRDATA2G];
+  static G4float GRWidth2G[MAXGRDATA2G];
 
   G4double fCummProbability[MAXDEPOINT2G];
 
@@ -124,17 +126,17 @@ private:
   G4double fProbability;
   G4double fStep;
   G4double fMaxLifeTime;
-  G4double fRelativeBR;
-  G4double fMultipoleMixing;
-  G4double fAngularRatio;
 
   G4double Tolerance;
 
-  G4bool fICM;
+  G4float fMultipoleMixing;
+  G4float fAngularRatio;
+
   G4bool fRDM;
   G4bool fSampleTime;
-  G4bool fIsomerFlag;
   G4bool isInitialised;
+
+  G4RandGeneral *energySpectrumSampler;
 
 #ifdef G4MULTITHREADED
   static G4Mutex PhotonEvaporationMutex;
@@ -147,21 +149,15 @@ inline void G4TwoPhotonEvaporation::SetVerboseLevel(G4int verbose)
 }
 
 inline void
-G4TwoPhotonEvaporation::SetMultipoleMixingRatio(G4double multipoleMixing)
+G4TwoPhotonEvaporation::SetMultipoleMixingRatio(G4float multipoleMixing)
 {
   fMultipoleMixing = multipoleMixing;
 }
 
 inline void
-G4TwoPhotonEvaporation::SetAngularRatio(G4double angularRatio)
+G4TwoPhotonEvaporation::SetAngularRatio(G4float angularRatio)
 {
   fAngularRatio = angularRatio;
-}
-
-inline void
-G4TwoPhotonEvaporation::SetRelativeBR(G4double branchingRatio)
-{
-  fRelativeBR = branchingRatio;
 }
 
 inline void
@@ -175,11 +171,6 @@ G4TwoPhotonEvaporation::InitialiseLevelManager(G4int Z, G4int A)
     fLevelManager = fNuclearLevelData->GetLevelManager(theZ, theA);
     fLevelEnergyMax = fLevelManager ? fLevelManager->MaxLevelEnergy() : 0.0;
   }
-}
-
-inline G4int G4TwoPhotonEvaporation::GetVacantShellNumber() const
-{
-  return vShellNumber;
 }
 
 #endif

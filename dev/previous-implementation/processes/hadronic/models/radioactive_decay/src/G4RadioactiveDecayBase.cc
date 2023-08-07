@@ -132,9 +132,7 @@ G4RadioactiveDecayBase::G4RadioactiveDecayBase(const G4String &processName)
     photonEvaporation->SetICM(true);
     // Set up two photon evaporation for use in G4TwoPhotonDecay
     twoPhotonEvaporation = new G4TwoPhotonEvaporation();
-    twoPhotonEvaporation->SetVerboseLevel(3);
     twoPhotonEvaporation->RDMForced(true);
-    twoPhotonEvaporation->SetICM(true);
 
     // DHW G4DeexPrecoParameters* deex = G4NuclearLevelData::GetInstance()->GetParameters();
     // DHW deex->SetCorrelatedGamma(true);
@@ -753,7 +751,7 @@ G4RadioactiveDecayBase::LoadDecayTable(const G4ParticleDefinition &theParentNucl
 
                             if (TwoPhotonDataFile.good())
                             {
-                                G4TwoPhotonDecay *aTwoPhotonChannel = new G4TwoPhotonDecay(&theParentNucleus, decayModeTotal, 0.0, 0.0, twoPhotonFile, twoPhotonEvaporation);
+                                G4TwoPhotonDecay *aTwoPhotonChannel = new G4TwoPhotonDecay(&theParentNucleus, decayModeTotal, 0.0, 0.0, twoPhotonEvaporation, twoPhotonFile);
                                 theDecayTable->Insert(aTwoPhotonChannel);
                                 // aTwoPhotonChannel->DumpNuclearInfo();
                             }

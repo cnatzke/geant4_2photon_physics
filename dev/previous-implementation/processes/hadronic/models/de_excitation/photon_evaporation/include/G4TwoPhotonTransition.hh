@@ -44,9 +44,7 @@
 
 #include "globals.hh"
 #include "G4Fragment.hh"
-#include "G4FragmentVector.hh"
 #include "G4PolarizationTransition.hh"
-#include "G4FragmentVector.hh"
 #include "Randomize.hh"
 
 class G4TwoPhotonTransition
@@ -56,41 +54,19 @@ public:
 
   virtual ~G4TwoPhotonTransition();
 
-  virtual G4FragmentVector *SampleTransition(G4Fragment *nucleus,
-                                             G4double newExcEnergy,
-                                             G4double multipoleRatio,
-                                             G4double angularRatio,
-                                             G4int shell,
-                                             G4bool isGamma,
-                                             G4bool isTwoPhoton);
+  virtual std::vector<G4Fragment *> SampleTransition(G4Fragment *nucleus,
+                                                     G4double newExcEnergy,
+                                                     G4double multipoleRatio,
+                                                     G4double angularRatio);
 
   virtual void SampleEnergy(G4double totalTransEnergy);
 
   virtual void SampleDirection();
 
-  inline G4ThreeVector GetPhoton0Direction()
-  {
-    return fDirectionPhoton0;
-  }
-
-  inline G4ThreeVector GetPhoton1Direction()
-  {
-    return fDirectionPhoton1;
-  }
-
-  inline G4double GetPhoton0Energy()
-  {
-    return fGamma0Energy;
-  }
-
-  inline G4double GetPhoton1Energy()
-  {
-    return fGamma1Energy;
-  }
-
   inline void SetVerbose(G4int val)
   {
     fVerbose = val;
+    fPolTrans.SetVerbose(val);
   };
 
 private:
@@ -105,18 +81,19 @@ private:
   G4bool operator==(const G4TwoPhotonTransition &right) const = delete;
   G4bool operator!=(const G4TwoPhotonTransition &right) const = delete;
 
+  G4bool polarFlag;
   G4int fDim;
-  G4double fGamma0Energy, fGamma1Energy;
-  G4ThreeVector fDirection;
-  G4ThreeVector fDirectionPhoton0, fDirectionPhoton1;
+  G4double eGamma1, eGamma2;
   std::vector<std::vector<G4double>> fRotationMatrix;
   G4RandGeneral *energySpectrumSampler;
   G4RandGeneral *angularDistributionSampler;
 
+protected:
+  G4ThreeVector fDirectionPhoton1;
+  G4ThreeVector fDirectionPhoton2;
+  G4PolarizationTransition fPolTrans;
   G4int fVerbose;
   G4double fMultipoleRatio, fAngularRatio;
-
-protected:
 };
 
 #endif

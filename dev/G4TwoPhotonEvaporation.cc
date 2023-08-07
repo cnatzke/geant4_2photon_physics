@@ -49,8 +49,8 @@
 #include <CLHEP/Units/SystemOfUnits.h>
 #include <CLHEP/Units/PhysicalConstants.h>
 
-G4float G4TwoPhotonEvaporation::GREnergy[] = {0.0f};
-G4float G4TwoPhotonEvaporation::GRWidth[] = {0.0f};
+G4float G4TwoPhotonEvaporation::GREnergy2G[] = {0.0f};
+G4float G4TwoPhotonEvaporation::GRWidth2G[] = {0.0f};
 
 #ifdef G4MULTITHREADED
 G4Mutex G4TwoPhotonEvaporation::PhotonEvaporationMutex = G4MUTEX_INITIALIZER;
@@ -58,9 +58,9 @@ G4Mutex G4TwoPhotonEvaporation::PhotonEvaporationMutex = G4MUTEX_INITIALIZER;
 
 G4TwoPhotonEvaporation::G4TwoPhotonEvaporation(G4TwoPhotonTransition *p)
     : fLevelManager(nullptr), fTransition(p),
-      fVerbose(0), fPoints(0), vShellNumber(-1), fIndex(0),
-      fMaxLifeTime(DBL_MAX), fICM(true), fRDM(false),
-      fSampleTime(true), fIsomerFlag(false), isInitialised(false)
+      fVerbose(0), fPoints(0), fIndex(0), vShellNumber(-1), fIndex(0),
+      fMaxLifeTime(DBL_MAX), fICM(true), fRDM(false), fTwoPhotonTransition(true),
+      fSampleTime(true), isInitialised(false), fIsomerFlag(false)
 {
     // G4cout << "### New G4TwoPhotonEvaporation() " << this << G4endl;
     fNuclearLevelData = G4NuclearLevelData::GetInstance();
@@ -78,7 +78,7 @@ G4TwoPhotonEvaporation::G4TwoPhotonEvaporation(G4TwoPhotonTransition *p)
     {
         fCummProbability[i] = 0.0;
     }
-    if (0.0f == GREnergy[1])
+    if (0.0f == GREnergy2G[1])
     {
         InitialiseGRData();
     }
@@ -119,14 +119,14 @@ void G4TwoPhotonEvaporation::InitialiseGRData()
 #ifdef G4MULTITHREADED
     G4MUTEXLOCK(&G4TwoPhotonEvaporation::PhotonEvaporationMutex);
 #endif
-    if (0.0f == GREnergy[1])
+    if (0.0f == GREnergy2G[1])
     {
         G4Pow *g4calc = G4Pow::GetInstance();
         const G4float GRWfactor = 0.3f;
         for (G4int A = 1; A < MAXGRDATA2G; ++A)
         {
-            GREnergy[A] = (G4float)(40.3 * CLHEP::MeV / g4calc->powZ(A, 0.2));
-            GRWidth[A] = GRWfactor * GREnergy[A];
+            GREnergy2G[A] = (G4float)(40.3 * CLHEP::MeV / g4calc->powZ(A, 0.2));
+            GRWidth2G[A] = GRWfactor * GREnergy2G[A];
         }
     }
 #ifdef G4MULTITHREADED
@@ -150,8 +150,6 @@ G4TwoPhotonEvaporation::EmittedFragments(G4Fragment *nucleus)
         G4cout << " RDM: " << fRDM
                << G4endl;
     }
-    fVerbose = 3;
-    G4cout << "CRN: fVerbose=" << fVerbose << G4endl;
     G4FragmentVector *gammas = GenerateGammas(nucleus);
 
     if (fVerbose > 1)
@@ -160,12 +158,33 @@ G4TwoPhotonEvaporation::EmittedFragments(G4Fragment *nucleus)
                << fRDM << " done:" << G4endl;
         if (gammas)
         {
-            // G4cout << *gammas << G4endl;
-            G4cout << "There are gammas, need to fix cout statement" << G4endl;
+            G4cout << *gammas << G4endl;
         }
         G4cout << "   Residual: " << *nucleus << G4endl;
     }
     return gammas;
+}
+
+G4double
+G4TwoPhotonEvaporation::GetFinalLevelEnergy(G4int Z, G4int A, G4double energy)
+{
+    G4double E = energy;
+    InitialiseLevelManager(Z, A);
+    if (fLevelManager)
+    {
+        E = fLevelManager->NearestLevelEnergy(energy, fIndex);
+        if (E > fLevelEnergyMax + Tolerance)
+        {
+            E = energy;
+        }
+    }
+    return E;
+}
+
+G4double G4TwoPhotonEvaporation::GetUpperLevelEnergy(G4int Z, G4int A)
+{
+    InitialiseLevelManager(Z, A);
+    return fLevelEnergyMax;
 }
 
 G4FragmentVector *
@@ -177,7 +196,7 @@ G4TwoPhotonEvaporation::GenerateGammas(G4Fragment *nucleus)
     }
 
     G4FragmentVector *results = new G4FragmentVector();
-    G4FragmentVector *gammas;
+    std::vector<G4Fragment *> gammas;
 
     G4double eexc = nucleus->GetExcitationEnergy();
     if (eexc <= Tolerance)
@@ -320,7 +339,7 @@ G4TwoPhotonEvaporation::GenerateGammas(G4Fragment *nucleus)
                 {
 
                     // Two-photon transition
-                    if (fTransition && rndm > ICProb)
+                    if (fTwoPhotonTransition && rndm > ICProb)
                     {
                         if (fVerbose > 3)
                         {
@@ -363,20 +382,19 @@ G4TwoPhotonEvaporation::GenerateGammas(G4Fragment *nucleus)
     // protection for floating levels
     if (std::abs(efinal - eexc) <= Tolerance)
     {
-        return results;
+        return result;
     }
 
     // Let transition class handle angular and energy distributions
-    fTransition->SetVerbose(3);
-    gammas = fTransition->SampleTransition(nucleus, efinal, fMultipoleMixing, fAngularRatio, vShellNumber, isGamma, isTwoPhoton);
+    gammas->SampleTransition(nucleus, efinal, fMultipoleMixing, fAngularRatio, vShellNumber, isGamma, isTwoPhoton);
 
-    if (gammas->size() != 0)
+    if (gammas.size() != 0)
     {
-        std::cout << "CRN: Setting creation time for " << gammas->size() << " particles" << G4endl;
-        for (auto it = 0; it < static_cast<int>(gammas->size()); ++it)
+        std::cout << "CRN: Setting creation time for " << gammas.size() << " particles" << G4endl;
+        for (auto const &it : gammas)
         {
-            gammas->at(it)->SetCreationTime(time);
-            results->push_back(gammas->at(it));
+            it->SetCreationTime(time);
+            results->push_back(it);
         }
     }
 
@@ -434,9 +452,9 @@ G4TwoPhotonEvaporation::GetEmissionProbability(G4Fragment *nucleus)
     }
 
     // ignore gamma de-excitation for highly excited levels
-    if (A >= MAXGRDATA2G)
+    if (A >= MAXGRDATA)
     {
-        A = MAXGRDATA2G - 1;
+        A = MAXGRDATA - 1;
     }
     // G4cout<<" GREnergy= "<< GREnergy[A]<<" GRWidth= "<<GRWidth[A]<<G4endl;
 
@@ -460,7 +478,7 @@ G4TwoPhotonEvaporation::GetEmissionProbability(G4Fragment *nucleus)
 
     fStep = emax;
     const G4double MaxDeltaEnergy = CLHEP::MeV;
-    fPoints = std::min((G4int)(fStep / MaxDeltaEnergy) + 2, MAXDEPOINT2G);
+    fPoints = std::min((G4int)(fStep / MaxDeltaEnergy) + 2, MAXDEPOINT);
     fStep /= ((G4double)(fPoints - 1));
     if (fVerbose > 2)
     {
@@ -540,12 +558,6 @@ void G4TwoPhotonEvaporation::SetTwoPhotonTransition(G4TwoPhotonTransition *p)
         fTransition = p;
     }
 }
-
-void G4TwoPhotonEvaporation::SetICM(G4bool val)
-{
-    fICM = val;
-}
-
 void G4TwoPhotonEvaporation::RDMForced(G4bool val)
 {
     fRDM = val;
